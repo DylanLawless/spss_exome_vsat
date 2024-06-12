@@ -2,7 +2,10 @@
 
 Rare variants in infection response protein pathway associated with sepsis in children.
 
-![](images/logo.webp)<!-- -->
+<!-- ![](images/logo.webp) -->
+<div style="display: flex; justify-content: space-between;">
+  <img src="images/logo.webp" style="width: 50%;" alt="Logo of DNA wizard"/>
+</div>
 
 # Introduction
 
