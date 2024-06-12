@@ -1,4 +1,9 @@
-# spss_exome_vsat
+# SPSS vsat
+
+Rare variants in infection response protein pathway associated with sepsis in children.
+
+![](images/logo.webp)<!-- -->
+
 # Introduction
 
 # Script order
