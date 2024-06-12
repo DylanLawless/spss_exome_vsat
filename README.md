@@ -2,6 +2,13 @@
 # Introduction
 
 # Script order
+* **Interpret**
+* AMCGuru_singlecase
+    - requires: stand_alone_vcf_to_table
+* AMCGuru_post_ppi
+* archipelag
+* untangleR
+
 * **Data prep**
 * joint_pca
 * ppi
@@ -11,8 +18,3 @@
 * variant_level/
 * gene_level/
  
-* **Interpret**
-* AMCGuru_post_ppi
-* AMCGuru_singlecase
-* archipelag
-* untangleR
