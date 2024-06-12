@@ -1,6 +1,4 @@
-<<<<<<< HEAD
 # spss_exome_vsat
-=======
 # Introduction
 
 # Script order
@@ -18,4 +16,3 @@ AMCGuru_post_ppi
 AMCGuru_singlecase
 archipelag
 untangleR
->>>>>>> Initial commit
