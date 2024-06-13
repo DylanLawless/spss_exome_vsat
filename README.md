@@ -19,6 +19,32 @@ Each tool and method used in our study is documented in detail to aid reproducib
 
 Contributions and insights from readers are highly encouraged, as we aim to foster a collaborative environment to enhance our understanding of sepsis at the genetic level.
 
+## Analysis overview
+
+<div style="display: flex; justify-content: space-between;">
+  <img src="images/yed_maps/mcl_skat_1.png" style="width: 50%;" alt="Logo of DNA wizard"/>
+</div>
+Figure: Simplified overview of full analysis.
+
+## Analysis order of steps
+<div style="display: flex; justify-content: space-between;">
+  <img src="images/yed_maps/mcl_skat_2.png" style="width: 80%;" alt="Logo of DNA wizard"/>
+</div>
+Figure: Complete overview of full analysis modules.
+
+## Protein pathway clustering
+A critical step in full genomics profiling is the interpretation of variant effect at the higher biological level,within a protein network. 
+Since a rare variant effect might be observed in a single patient, we must collapse variants into their protein pathways to observe the association signal across all patients with a shared phenotype.
+To achieve this, we made **proteo**me clustering with **MCL** algorithm in **R** (ProteoMCLustR).
+We have designed the proteomclustr method to allow unbiased testing withing protein pathways. 
+It combines the Markov Cluster Algorithm (MCL), a protein-protein interaction (PPI) database (such as STRINGdb), and customizable parameters tailored to the biological scenario (e.g., PPI evidence score and biological pathway size limits). 
+The ProteoMCLustR approach constructs whole-genome protein pathways based on an external database, enabling a comprehensive understanding of biological networks while considering their complexity and specificity. The algorithm is less prone to bias during subsequent statistical analysis, as it performs network clustering independently of the test data.
+
+<div style="display: flex; justify-content: space-between;">
+  <img src="images/yed_maps/mcl_skat_trim.png" style="width: 80%;" alt="Logo of DNA wizard"/>
+</div>
+Figure: Summary of the algorithm implemented by [ProteoMCLustR](https://github.com/DylanLawless/ProteoMCLustR) for PPI clustering.
+
 # Script order
 1. Data preperation
     - joint_pca
@@ -105,22 +131,6 @@ The root directory contains:
 - `document.sh`: Shell script that generates the directory structure and embeds it into a documentation file, along with the content of R and shell scripts found throughout the project.
 
 ### Script Details
-
-
-<div style="display: flex; justify-content: space-between;">
-  <img src="images/yed_maps/mcl_skat_1.png" style="width: 50%;" alt="Logo of DNA wizard"/>
-</div>
-Figure: Simplified overview of full analysis.
-
-<div style="display: flex; justify-content: space-between;">
-  <img src="images/yed_maps/mcl_skat_2.png" style="width: 80%;" alt="Logo of DNA wizard"/>
-</div>
-Figure: Complete overview of full analysis modules.
-
-<div style="display: flex; justify-content: space-between;">
-  <img src="images/yed_maps/mcl_skat_trim.png" style="width: 80%;" alt="Logo of DNA wizard"/>
-</div>
-Figure: Summary of the algorithm implemented by <https://github.com/DylanLawless/ProteoMCLustR> for PPI clustering.
 
 #### `ACMGuru_post_ppi_vcurrent.R`
 - **Purpose**: This script performs post-protein interaction analysis for genetic variants, including reading VCF files, applying ACMG standards to assess variant pathogenicity, and visualizing results.
