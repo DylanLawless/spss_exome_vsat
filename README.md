@@ -105,14 +105,22 @@ The root directory contains:
 - `document.sh`: Shell script that generates the directory structure and embeds it into a documentation file, along with the content of R and shell scripts found throughout the project.
 
 ### Script Details
+
+
 <div style="display: flex; justify-content: space-between;">
-  <img src="images/yed_maps/mcl_skat_1.png" style="width: 45%;" alt="Logo of DNA wizard"/>
-  <img src="images/yed_maps/mcl_skat_2.png" style="width: 45%;" alt="Logo of DNA wizard"/>
+  <img src="images/yed_maps/mcl_skat_1.png" style="width: 50%;" alt="Logo of DNA wizard"/>
 </div>
+Figure: Simplified overview of full analysis.
+
+<div style="display: flex; justify-content: space-between;">
+  <img src="images/yed_maps/mcl_skat_2.png" style="width: 80%;" alt="Logo of DNA wizard"/>
+</div>
+Figure: Complete overview of full analysis modules.
 
 <div style="display: flex; justify-content: space-between;">
   <img src="images/yed_maps/mcl_skat_trim.png" style="width: 80%;" alt="Logo of DNA wizard"/>
 </div>
+Figure: Summary of the algorithm implemented by <https://github.com/DylanLawless/ProteoMCLustR> for PPI clustering.
 
 #### `ACMGuru_post_ppi_vcurrent.R`
 - **Purpose**: This script performs post-protein interaction analysis for genetic variants, including reading VCF files, applying ACMG standards to assess variant pathogenicity, and visualizing results.
