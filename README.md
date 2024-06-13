@@ -82,16 +82,12 @@ This repository houses scripts crucial for interpreting variant data to determin
 ### Script Descriptions
 The project directory contains several R scripts and directories, each dedicated to specific tasks or components of the project. The main directories include scripts for post-processing, handling single cases, summarizing cohorts, and converting VCF files to tables. Here's a breakdown:
 
-- **ACMGuru_post_ppi**: Contains scripts for post-processing proteomics data.
-  - `ACMGuru_post_ppi_vcurrent.R`: Handles variant data post-protein interaction analysis, integrating several bioinformatics resources and libraries such as dplyr, tidyr, and ggplot2 for data manipulation and visualization.
-  
-- **ACMGuru_singlecase**: Manages scripts specific to single case studies in genetic research.
-  - `ACMGuru_singlecase_vcurrent.R`: Script for analyzing single case studies, applying ACMG guidelines to genetic variants, and incorporating custom scripts for converting VCF files to more usable table formats.
+- **ACMGuru_singlecase**: Manages scripts specific to single-case level variant interpretation.
+  - `ACMGuru_singlecase_vcurrent.R`: Script for analyzing single case studies, applying ACMG guidelines to genetic variants, and incorporating custom scripts for converting VCF files to more usable table formats. Requires `stand_alone_vcf_to_table` to import VCFs which were produced from GATK pipeline and ensembl VEP annotation.
   - `sync.sh`: A shell script to synchronize project data with a remote server using rsync.
 
-- **cohort_summary_curated**: Scripts for summarizing cohort data in a curated format.
-  - `cohort_summary_post_ppi_vcurrent.R`, `cohort_summary_post_singlecase_vcurrent.R`, `cohort_summary_vcurrent.R`: These scripts summarize different aspects of cohort data post-analysis, applying statistical summaries and data visualization.
-  - `sync.sh`: Synchronizes the latest sample list and other data from a remote location.
+- **ACMGuru_post_ppi**: Contains scripts for cohort-level variant interpretation which was output from joint analysis of association testing within pathway networks. Requires `stand_alone_vcf_to_table` to import VCFs which were produced from GATK pipeline and ensembl VEP annotation.
+  - `ACMGuru_post_ppi_vcurrent.R`: Handles variant data post-protein interaction analysis, integrating several bioinformatics resources and libraries such as dplyr, tidyr, and ggplot2 for data manipulation and visualization.
 
 - **stand_alone_vcf_to_table**: Contains scripts for converting VCF files into table formats, simplifying the analysis of genetic variants. The scripts together act as a pipeline to process VCF files, extract and clean genotype data, and display progress.
 	- **stand_alone_vcf_to_table.R**: Coordinates the conversion of VCF files from initial read to final table output, ensuring all components function seamlessly.
@@ -105,6 +101,10 @@ The project directory contains several R scripts and directories, each dedicated
         - source("genotype_clean.R")
         - source("progress_bar.R")
     - merge results into single dataframe.
+
+- **cohort_summary_curated**: Scripts for summarizing cohort data in a curated format.
+  - `cohort_summary_post_ppi_vcurrent.R`, `cohort_summary_post_singlecase_vcurrent.R`, `cohort_summary_vcurrent.R`: These scripts summarize different aspects of cohort data post-analysis, applying statistical summaries and data visualization.
+  - `sync.sh`: Synchronizes the latest sample list and other data from a remote location.
 
 The root directory contains:
 - `directory_structure.txt`: Lists the directory structure for documentation purposes.
