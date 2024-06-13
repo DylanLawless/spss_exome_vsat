@@ -1,18 +1,38 @@
 # AMCGuru ----
 
+# https://varsome.com/about/resources/germline-implementation/
+# https://mart.ensembl.org/info/genome/variation/prediction/protein_function.html
+
 library(dplyr)
 library(tidyr)
 library(stringr)
 library(ggplot2)
-library(scico) # devtools::install_github("thomasp85/scico") # scico_palette_show()
+library(scico) # devtools::install_github("thomasp85/scico")
+# scico_palette_show()
+library(knitr)
+library(ggpubr) # For ggarrange
+library(cowplot) # For get_legend
+library(gridExtra)
 library(grid)
 library(forcats) # new facet labels
 library(ggrepel)
-library(ggpubr) # For ggarrange
-library(cowplot) # For get_legend
-library(patchwork) # plots in panels
+library(patchwork)
 
-file_suffix <- "singlecase_"
+# make a loop for all genesets:
+# geneset_MCL_ID <- "22"
+
+geneset_MCL_ID <- c(22, 586)
+geneset_MCL_ID[[1]]
+geneset_MCL_ID[[2]]
+
+# geneset_MCL_ID <- "586"
+output_ID <- paste("post_ppi_MCL_ID_", paste(geneset_MCL_ID, collapse="_"), "_", sep = "")
+
+f1 <- paste("../../data/post_ppi/bcftools_gatk_norm_maf01.recode_vep_conda_impact_MCL_", geneset_MCL_ID[[1]], ".vcf.gz", sep = "")
+
+f2 <- paste("../../data/post_ppi/bcftools_gatk_norm_maf01.recode_vep_conda_impact_MCL_", geneset_MCL_ID[[2]], ".vcf.gz", sep = "")
+
+file_list <- c(f1, f2)
 
 # acmg ----
 # For reference
@@ -20,7 +40,6 @@ file_suffix <- "singlecase_"
 # df_acmg_caveat <- read.table("../../ref/acmg_criteria_table_caveats.txt", sep = "\t", header = TRUE)
 
 # iuis ----
-
 iuis <- read.table(
   file = "../../ref/10875_2022_1289_MOESM2_ESM_DLcleaned.tsv",
   sep = "\t",
@@ -33,18 +52,16 @@ colnames(iuis)[colnames(iuis) == 'Gene.symbol'] <- 'SYMBOL'
 # varsome ----
 # LE = less than equal to, GE = greater than equal to
 varsome <- read.table(file = "../../ref/varsome_calibrated_insilico_thresholds.tsv", sep="\t", header = TRUE)
-
 # qv ----
 
 # for (f in 6) {
-file_list <- c(
-	paste0("../../data/singlecase/bcftools_gatk_norm_maf01.recode_vep_conda_impact_iuis_gnomad_af1_chr_", 1:22, ".vcf.gz")
-	# ,"../data/annotation/bcftools_gatk_norm_maf01.recode_vep_conda_small_impact_gnomad_chr_X.vcf.gz", 
-	#  "../data/annotation/bcftools_gatk_norm_maf01.recode_vep_conda_small_impact_gnomad_chr_Y.vcf.gz"
-)
+# file_list <- c(
+# 	paste0("../../data/AMCGuru_post_ppi/bcftools_gatk_norm_maf01.recode_vep_conda_impact_iuis_gnomad_af1_chr_", 1:22, ".vcf.gz")
+# 	# ,"../data/annotation/bcftools_gatk_norm_maf01.recode_vep_conda_small_impact_gnomad_chr_X.vcf.gz", 
+# 	#  "../data/annotation/bcftools_gatk_norm_maf01.recode_vep_conda_small_impact_gnomad_chr_Y.vcf.gz"
+# )
 
 df_pathway_list <- list()
-# for (f in 21) {
 for (f in 1:length(file_list)) {
 	cat("Now analysing", f, "\n")
 	source("../stand_alone_vcf_to_table/stand_alone_vcf_to_table.R")
@@ -84,7 +101,6 @@ for (f in 1:length(file_list)) {
 	df_pathway_list[[f]] <- df
 }
 
-
 df_pathway <- do.call(rbind, df_pathway_list)
 df <- df_pathway
 df <- df |> filter(!is.na(SYMBOL)) # clean out unassigned
@@ -93,7 +109,7 @@ hold <- df
 # saveRDS(df, "./df.Rds")
 # df <- readRDS("./df.Rds")
 
-rm(list=setdiff(ls(), c("df",  "df_acmg", "df_acmg_caveat", "file_suffix", "hold", "iuis", "varsome")))
+rm(list=setdiff(ls(), c("df",  "df_acmg", "df_acmg_caveat", "geneset_MCL_ID", "output_ID", "hold", "iuis", "varsome")))
 gc()
 df <- hold
 
@@ -105,37 +121,65 @@ df <- merge(df, iuis, by="SYMBOL", all.x=TRUE) |> dplyr::select(SYMBOL, Inherita
 df$gnomAD_AF <- as.numeric(df$gnomAD_AF)
 df$AC <- as.numeric(df$AC)
 df$AF.x <- as.numeric(df$AF.x)
-temp <- df |> ungroup() |> dplyr::select(genotype, Inheritance, IMPACT, Consequence, AF.x, AC, gnomAD_AF, HGVSc) |> unique()
+df_summaries <- df |> ungroup() |> dplyr::select(genotype, Inheritance, IMPACT, Consequence, AF.x, AC, gnomAD_AF, HGVSc) |> unique()
 
-temp |> 
+df_summaries |> 
   group_by(genotype) |>
-  summarise(n())
+  summarise(variants = n()) |>
+  kable("latex", booktabs = TRUE)
 
-temp |> 
+df_summaries |> 
   group_by(Inheritance) |>
-  summarise(n())
+  summarise(n())|>
+  kable("latex", booktabs = TRUE)
 
-temp |> 
-  group_by(IMPACT) |>
-  summarise(n())
+df_summaries |> 
+  ungroup() |>
+  group_by(Consequence, IMPACT, genotype) |>
+  summarise(unique_variants = n()) |>
+  arrange(IMPACT, unique_variants, genotype) |>
+  kable("latex", booktabs = TRUE)
 
-temp |> 
-  group_by(Consequence) |>
-  summarise(n())
+# df_summaries |> 
+#   group_by(Consequence, IMPACT, genotype) |>
+#   summarise( "unique variants" = n_distinct(HGVSc)) |>
+#   arrange(IMPACT, "unique variants", genotype) |>
+#   kable("latex", booktabs = TRUE)
 
-temp |> 
-  group_by(AF.x) |>
-  summarise(n())
-
-temp |> 
+df_summaries |> 
   group_by(AC) |>
-  summarise(n())
+  summarise(count = n()) |>
+  kable("latex", booktabs = TRUE)
 
-temp |>
+df_summaries |>
   ungroup() |>
   dplyr::select(HGVSc) |>
   unique() |>
-  summarise(n())
+  summarise(n())|>
+  kable("latex", booktabs = TRUE)
+
+# plot AC per var
+df_summaries$rownames <- rownames(df_summaries)
+
+# rank by AC
+df_summaries_grouped <- df_summaries |>
+  dplyr::select(HGVSc, AC, genotype) |>
+  arrange(AC) |>
+  mutate(Rank = row_number())
+
+
+ac_count_per_var <- df_summaries_grouped |>
+  ggplot(aes(x = Rank, y = AC, fill=as.factor(genotype) )) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = c("grey", "#ee5d6c"), name = "Carrier\ngenotype", 
+                    guide = guide_legend(reverse = TRUE)) +
+  theme_minimal() +
+  xlab("Unique variant\n(arranged by allele count)") +
+  ylab("Alelle count")
+
+ac_count_per_var
+
+ggsave(paste("../../images/AMCGuru_post_ppi/", output_ID, "ac_count_per_var.pdf", sep = "") ,plot = ac_count_per_var )
 
 # df_desc <- describe(temp)
 # df_desc
@@ -234,6 +278,7 @@ df <- df %>%
 
 df <- df |> separate(SIFT, into = c("SIFT_label", "SIFT_score"), sep = "\\(", remove = TRUE) |>
 	mutate(SIFT_score = str_replace(SIFT_score, "\\)", "")) 
+
 df <- df |> separate(PolyPhen, into = c("PolyPhen_label", "PolyPhen_score"), sep = "\\(", remove = TRUE) |>
 	mutate(PolyPhen_score = str_replace(PolyPhen_score, "\\)", "")) 
 df$CADD_PHRED <- as.numeric(df$CADD_PHRED)
@@ -262,7 +307,7 @@ df |> filter(ACMG_PP3 == "PP3")
 # Remove temporary column
 df$ACMG_PP3_count <- NULL
 
-rm(list=setdiff(ls(), c("df",  "df_acmg", "df_acmg_caveat", "file_suffix", "hold", "iuis", "varsome")))
+rm(list=setdiff(ls(), c("df",  "df_acmg", "df_acmg_caveat", "geneset_MCL_ID", "output_ID", "hold", "iuis", "varsome", "ac_count_per_var")))
 
 # PP3 In silico: varsome ----
 # Varsome conditions
@@ -372,7 +417,7 @@ p.pathogenicity_distributions_engines <- df_long |>
 	guides(fill=FALSE) +
 	scale_fill_scico(palette = 'bamako', direction = 1) # batlowK, acton, lajolla, lapaz, turku
 p.pathogenicity_distributions_engines
-ggsave(paste("../../images/singlecase/", file_suffix, "pathogenicity_distributions_engines.pdf", sep = "") ,plot = p.pathogenicity_distributions_engines)
+ggsave(paste("../../images/AMCGuru_post_ppi/", output_ID, "pathogenicity_distributions_engines.pdf", sep = "") ,plot = p.pathogenicity_distributions_engines, width = 9, height = 5)
 
 # Append a suffix to the pathogenicity column in varsome_thresholds
 varsome_thresholds$pathogenicity <- paste0(varsome_thresholds$pathogenicity, "_threshold")
@@ -383,7 +428,6 @@ varsome_thresholds_wide <- varsome_thresholds |>
 
 # Join with df_long
 df_long <- left_join(df_long, varsome_thresholds_wide, by = "Engine")
-
 
 Strong_pathogenic_GE_threshold <- 3
 Moderate_pathogenic_GE_threshold <- 4
@@ -412,7 +456,6 @@ threshold_results_long <- threshold_results |>
                names_to = "Measurement",
                values_to = "Value")
 
-library(knitr)
 threshold_results_long %>%
   mutate(Value = round(Value, 2)) %>% 
   kable("latex", booktabs = TRUE)
@@ -427,7 +470,6 @@ df$ACMG_PP3 <- ifelse(
 )
 
 df |> filter(ACMG_PP3 == "PP3")
-
 
 # independent fill scales ----
 # Preparing the data
@@ -490,9 +532,8 @@ p.pathogenicity_distributions_engines_threshold <-
 		left = textGrob("No. qualifying variants", rot = 90, vjust = 1 ),
 		bottom = textGrob("in silico prediction score" )
 	)
-
 p.pathogenicity_distributions_engines_threshold
-ggsave(paste("../../images/singlecase/", file_suffix, "pathogenicity_distributions_engines_threshold.pdf", sep = "") ,plot = p.pathogenicity_distributions_engines_threshold)
+ggsave(paste("../../images/AMCGuru_post_ppi/", output_ID, "pathogenicity_distributions_engines_threshold.pdf", sep = "") ,plot = p.pathogenicity_distributions_engines_threshold)
 
 # thresholds passed 
 labels <- c( Strong_pathogenic_GE="Strong", Moderate_pathogenic_GE="Moderate", Supporting_pathogenic_GE="Supporting")
@@ -509,9 +550,10 @@ p.pathogenicity_distributions <- df |>
 						 box.padding = 0.5, max.overlaps = Inf,
 						 # padding = unit(0.5, "lines"),
 						 # nudge_y = 0.05,  
-						 nudge_x = .4, 
+						 nudge_x = .0,
+						 nudge_y = .1,
 						 direction = "y",
-						 aes(label= ifelse(..count.. < 1000, ..count.., ''))
+						 aes(label= ifelse(..count.. < 500, ..count.., ''))
 						 ) +
 	facet_grid(pathogenicity ~ ., labeller=labeller(pathogenicity = labels)) +
 	theme_minimal() +
@@ -520,7 +562,8 @@ p.pathogenicity_distributions <- df |>
 	guides(fill=FALSE) +
 	scale_fill_scico(palette = 'bamako', direction = 1) # batlowK, acton, lajolla, lapaz, turku
 p.pathogenicity_distributions
-ggsave(paste("../../images/singlecase/", file_suffix, "pathogenicity_distributions.pdf", sep = "") ,plot = p.pathogenicity_distributions)
+ggsave(paste("../../images/AMCGuru_post_ppi/", output_ID, "pathogenicity_distributions.pdf", sep = "") ,plot = p.pathogenicity_distributions)
+
 
 # acmg tally  ----
 # List of all ACMG labels
@@ -550,10 +593,10 @@ p.criteria_count_each_gene <- df |>
   geom_point() +
   theme_minimal() +
   theme(axis.text.x  = element_text(angle=45, hjust=1, vjust=1)) +
-  xlab("Gene symbol") +
+  xlab("\nGene symbol") +
   ylab("ACMG criteria count (>1)")
 p.criteria_count_each_gene
-ggsave(paste("../../images/singlecase/", file_suffix, "criteria_count_each_gene.pdf", sep = "") ,plot = p.criteria_count_each_gene )
+ggsave(paste("../../images/AMCGuru_post_ppi/", output_ID, "criteria_count_each_gene.pdf", sep = "") ,plot = p.criteria_count_each_gene )
 
 # as table
 df |> 
@@ -571,11 +614,11 @@ p.criteria_gene_total <- df %>%
   theme_minimal() +
   xlab("No. ACMG criteria (P) variants per gene") +
   ylab("Number of genes") +
-  geom_text(stat='count', aes(label=..count.., y=..count..+20), color = "black") + 
+  geom_text(stat='count', aes(label=..count.., y=..count..+1), color = "black") + 
   guides(fill=FALSE) +
   scale_fill_scico(palette = 'acton', direction = 1) # batlowK, acton, lajolla, lapaz, turku
 p.criteria_gene_total 
-ggsave(paste("../../images/singlecase/", file_suffix, "criteria_gene_total.pdf", sep = "") ,plot = p.criteria_gene_total )
+ggsave(paste("../../images/AMCGuru_post_ppi/", output_ID, "criteria_gene_total.pdf", sep = "") ,plot = p.criteria_gene_total )
 
 # as table
 df |>
@@ -590,11 +633,11 @@ p.variants_per_criteria <- df |>
   xlab("No. ACMG criteria\nassigned (P)") +
   ylab("No. variants") +
   theme_minimal() +
-  geom_text(stat='count', aes(label=..count.., y=..count..+300), color = "black") + 
+  geom_text(stat='count', aes(label=..count.., y=..count..+20), color = "black") + 
   guides(fill=FALSE) +
   scale_fill_scico(palette = 'acton', direction = 1) # batlowK, acton, lajolla, lapaz, turku
 p.variants_per_criteria
-ggsave(paste("../../images/singlecase/", file_suffix, "variants_per_criteria.pdf", sep = "") ,plot = p.variants_per_criteria , width = 9, height = 5)
+ggsave(paste("../../images/AMCGuru_post_ppi/", output_ID, "variants_per_criteria.pdf", sep = "") ,plot = p.variants_per_criteria , width = 9, height = 5)
 
 # Check we only have approx. 1 "casual" variant per sample
 p.criteria_per_sample <- df %>%
@@ -604,11 +647,11 @@ p.criteria_per_sample <- df %>%
   geom_histogram(binwidth = 1, color = "black") +
   labs(x = "No. ACMG criteria\nassigned (P)", y = "No. samples") +
   theme_minimal() +
-  geom_text(stat='count', aes(label=..count.., y=..count..+20), color = "black") + 
+  geom_text(stat='count', aes(label=..count.., y=..count..+10), color = "black") + 
   guides(fill=FALSE) +
   scale_fill_scico(palette = 'acton', direction = 1) # batlowK, acton, lajolla, lapaz, turku
 p.criteria_per_sample
-ggsave(paste("../../images/singlecase/", file_suffix, "criteria_per_sample.pdf", sep = "") ,plot = p.criteria_per_sample )
+ggsave(paste("../../images/AMCGuru_post_ppi/", output_ID, "criteria_per_sample.pdf", sep = "") ,plot = p.criteria_per_sample, width = 9, height = 5)
 
 # as table
 df |> 
@@ -637,13 +680,12 @@ df |>
 # Likely Benign if between -6 and -1,
 # Benign if less than or equal to -7.
 
-# Benign if less than or equal to -7.
-
 df <-  df |> dplyr::select("ACMG_PVS1", "ACMG_PS1", "ACMG_PS2", "ACMG_PS3", "ACMG_PS4", "ACMG_PS5", 
-                           "ACMG_PM1", "ACMG_PM2", "ACMG_PM3", "ACMG_PM4", "ACMG_PM5", "ACMG_PM6", 
-                           "ACMG_PM7", "ACMG_PP1", "ACMG_PP2", "ACMG_PP3", "ACMG_PP4",
-                           everything())
+                 "ACMG_PM1", "ACMG_PM2", "ACMG_PM3", "ACMG_PM4", "ACMG_PM5", "ACMG_PM6", 
+                 "ACMG_PM7", "ACMG_PP1", "ACMG_PP2", "ACMG_PP3", "ACMG_PP4",
+                 everything())
 
+# df <- df %>% dplyr::select(ACMG_highest, ACMG_score, ACMG_count,ACMG_PP3:ACMG_PVS1, ACMG_PS2:ACMG_PP4, everything())
 
 # Define scores for each ACMG label
 acmg_scores <- c("PVS1" = 8,
@@ -681,25 +723,20 @@ p.acmg_score <- df |>
 	theme_minimal() +
 	xlab("ACMG score") +
 	ylab("No. variants") +
-	geom_text(stat='count', aes(label=..count.., y=..count..+300), color = "black") + 
+	geom_text(stat='count', aes(label=..count.., y=..count..+50), color = "black") + 
 	guides(fill=FALSE) +
 	scale_fill_scico(palette = 'bamako', direction = 1) # batlowK, acton, lajolla, lapaz, turku
 p.acmg_score 
-ggsave(paste("../../images/singlecase/", file_suffix, "acmg_score.pdf", sep = "") ,plot = p.acmg_score )
+ggsave(paste("../../images/AMCGuru_post_ppi/", output_ID, "acmg_score.pdf", sep = "") ,plot = p.acmg_score )
 
 
 # panel ----
 # plot1 + (plot2 + plot3) + plot_layout(ncol = 1)
 patch1 <- (
 	(p.criteria_gene_total) / ( p.variants_per_criteria | p.criteria_per_sample ) / ( p.pathogenicity_distributions | p.acmg_score)
-) + plot_annotation(tag_levels = 'A')
-ggsave(paste("../../images/singlecase/", file_suffix, "patch1.pdf", sep = "") ,plot = patch1  + plot_annotation(tag_levels = 'A'), width = 8, height = 10 )
-
-patch2 <- (
-	(p.criteria_gene_total) / ( p.variants_per_criteria | p.criteria_per_sample ) / ( p.pathogenicity_distributions | p.acmg_score)
 )  | (p.pathogenicity_distributions_engines_threshold) + plot_annotation(tag_levels = 'A')
-# patch2
-ggsave(paste("../../images/singlecase/", file_suffix, "patch2.pdf", sep = "") ,plot = patch2 + plot_annotation(tag_levels = 'A'), width = 16, height = 10 )
+patch1
+ggsave(paste("../../images/AMCGuru_post_ppi/", output_ID, "patch1.pdf", sep = "") ,plot = patch1 + plot_annotation(tag_levels = 'A'), width = 16, height = 10 )
  
 # plot order
 # p.criteria_count_each_gene
@@ -710,77 +747,72 @@ ggsave(paste("../../images/singlecase/", file_suffix, "patch2.pdf", sep = "") ,p
 # p.pathogenicity_distributions_engines_threshold
 # p.acmg_score
 
-# * * Report * *----
+
+# For pathways, summarise set ----
+# p.var_per_gene <- 
+df_summary_vpg <- df |> 
+  dplyr::select(SYMBOL, rownames) |> unique() |>
+  group_by(SYMBOL) |> 
+  summarise(var_per_gene=n())
+
+
+ df_summary_nc <- df |> 
+  dplyr::select(SYMBOL, rownames, sample) |> unique() |>
+  group_by(SYMBOL, rownames) |> 
+  summarise(n_carriers=n())
+
+df_summary_unq <- df |> 
+	dplyr::select(ACMG_score, ACMG_highest, SYMBOL, rownames, HGVSc, HGVSp) |> unique() |>
+	unique()
+
+temp <- merge(df_summary_vpg, df_summary_nc, by="SYMBOL")
+df_summary_unq_vpg_nc <- merge(temp, df_summary_unq)
+rm(temp)
+
+var_per_gene <- df_summary_unq_vpg_nc |>
+  dplyr::select(SYMBOL, var_per_gene) |>
+  unique() |>
+  ggplot(aes(x=SYMBOL, y=var_per_gene)) +
+  geom_point(aes(fill=var_per_gene), color="black", shape = 21) +
+  xlab("Gene symbol") +
+  ylab("No. variants") +
+  theme_minimal()  +
+  scale_fill_scico(palette = 'lapaz', direction = 1,
+                   name = "Variants\nper gene",) + # batlowK, acton, lajolla, lapaz, turku
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+
+var_per_gene
+
+ggsave(paste("../../images/AMCGuru_post_ppi/", output_ID, "var_per_gene.pdf", sep = "") ,plot = var_per_gene + plot_annotation(tag_levels = 'A'), width = 9, height = 3 )
+
+# joint figure ----
+var_per_gene_ac_count_per_var <- (ac_count_per_var / var_per_gene)
+
+ggsave(paste("../../images/AMCGuru_post_ppi/", output_ID, "var_per_gene_ac_count_per_var.pdf", sep = "") ,plot = var_per_gene_ac_count_per_var + plot_annotation(tag_levels = 'A'), width = 8, height = 5 )
+
+# Report ----
+df_report <- df
 # df_report <- df |> filter(ACMG_count > 0)
-df_report <- df |> filter(ACMG_total_score > 0)
+# df_report <- df |> filter(ACMG_score > 0)
 # see: iuis_iei_table.R for reactable
 
-# clean up the result data for merging
-df_report <- df_report |> dplyr::select(sample, everything())
+df_report |> dplyr::select(ACMG_total_score, ACMG_count, ACMG_highest, SYMBOL, rownames, Protein_position, CDS_position) |> arrange(desc(ACMG_count))
 
-# clean IDs 
-df_report <- separate(df_report, sample, into = c("V1", "V2", "V3", "V4", "V5"))
+# t <- df_report |> filter(gnomAD_AF < 1e-4) 
 
-df_report <- df_report |> mutate(V1 = ifelse(V1 == "raw", NA, V1))
+# save a copy to archipelago
+df$chr
+df$rownames
+df$MCL_ID <-  paste(geneset_MCL_ID, collapse="_")
 
-df_report <- df_report |>
-  unite(V1, V2, col = "sample.id", sep = "", na.rm = TRUE) 
+df_archi <- df |> dplyr::select(rownames, MCL_ID)
 
-df_report <- df_report |> dplyr::select(-V3, -V4, -V5)
+df_archi <- df_archi %>%
+	separate(rownames, into = c("CHR", "BP_variant"), sep = ":") |>
+	separate(BP_variant, into = c("BP", "variant"), sep = "_") |>
+	mutate(CHR = str_replace(CHR, "chr", ""))
 
-# collect columns where evidence was used
-list_of_used_columns <- c()
-list_of_used_columns <- c(list_of_used_columns,
-                          "IMPACT", 
-                          "genotype", 
-                          "Inheritance", 
-                          "CLIN_SIG", 
-                          "gnomAD_AF", 
-                          "comp_het_flag",
-                          # pathgenicty predics
-                          "Strong_pathogenic_GE",
-                          "Moderate_pathogenic_GE",
-                          "Supporting_pathogenic_GE"
-                          # ACMG_PP3 columns set 1:
-                          #"CADD_PHRED", "REVEL_rankscore", "MetaLR_pred",
-                          #"MutationAssessor_pred", "SIFT_label", "PolyPhen_label"
-                          )
-
-df_report |> names()
-
-df_report_main_text <- df_report |> 
-  filter(ACMG_score > 2 ) |>
-  dplyr::select(sample.id, 
-                ACMG_total_score,
-                ACMG_score, 
-                ACMG_count, 
-                ACMG_highest, 
-                SYMBOL, 
-                rownames,
-                chr,
-                HGVSp,
-                HGVSc,
-                Consequence,
-                list_of_used_columns
-                ) |> 
-  arrange(SYMBOL,
-          desc(ACMG_score),
-          sample.id)
-
-colnames(df_report_main_text)[colnames(df_report_main_text) == 'Strong_pathogenic_GE'] <- 'Strong_patho'
-colnames(df_report_main_text)[colnames(df_report_main_text) == 'Moderate_pathogenic_GE'] <- 'Moder_patho'
-colnames(df_report_main_text)[colnames(df_report_main_text) == 'Supporting_pathogenic_GE'] <- 'Suppor_patho'
-
-
-saveRDS(df_report, file="../../data/singlecase/df_report.Rds")
-
-saveRDS(df_report_main_text, file="../../data/singlecase/df_report_main_text.Rds")
-
-
-geneset_MCL_ID <- "" #ignore pathway level info
-write.csv(df_report_main_text,  paste0("../../data/singlecase/AMCGuru_singlecase_df_report_main_text.csv"))
-
-write.csv(df_report,  paste0("../../data/singlecase/AMCGuru_singlecase_df_report.csv"))
+saveRDS(df_archi, paste0("../../data/archipelago/archipelago", paste(geneset_MCL_ID, collapse="_"), ".R"))
 
 # PS4 method ----
 
@@ -836,3 +868,113 @@ write.csv(df_report,  paste0("../../data/singlecase/AMCGuru_singlecase_df_report
 # GERP.._NR
 # GERP.._RS_rankscore
 # GERP.._RS
+
+# data sources ----
+# system("cp ~/web/tools/genomic_tools/acmg_filter/data/acgm_criteria_table.txt ../data/")
+# system(
+# "cp ~/web/tools/genomic_tools/acmg_filter/data/acgm_criteria_table_caveats.txt ../data/"
+# )
+
+
+# clean up the VSAT result data for merging
+df_report_sample_vsat <- df_report |> dplyr::select(sample, everything())
+
+# clean IDs 
+df_report_sample_vsat <- separate(df_report_sample_vsat, sample, into = c("V1", "V2", "V3", "V4", "V5"))
+
+df_report_sample_vsat <- df_report_sample_vsat |> mutate(V1 = ifelse(V1 == "raw", NA, V1))
+
+df_report_sample_vsat <- df_report_sample_vsat |>
+  unite(V1, V2, col = "sample.id", sep = "", na.rm = TRUE)
+
+df_report_sample_vsat <- df_report_sample_vsat |> filter(cohort_pheno == 1)
+df_report_sample_vsat <- df_report_sample_vsat |> dplyr::select(sample.id)
+df_report_sample_vsat <- df_report_sample_vsat |> unique()
+df_report_sample_vsat$group <- "VSAT_contributer"
+
+# saveRDS(df_report_sample_vsat, file = "../../data/AMCGuru_post_ppi/df_report_sample_vsat.Rds")
+
+saveRDS(df_report_sample_vsat, paste0("../../data/ACMGuru_post_ppi/df_report_sample_vsat_", paste(geneset_MCL_ID, collapse="_"), ".Rds"))
+
+# * * Report * *----
+# df_report <- df |> filter(ACMG_count > 0)
+# df_report <- df |> filter(ACMG_total_score > 2)
+df_report <- df |> filter(ACMG_total_score >= 0)
+# see: iuis_iei_table.R for reactable
+
+# clean up the result data for merging
+df_report <- df_report |> dplyr::select(sample, everything())
+
+# clean IDs 
+df_report <- separate(df_report, sample, into = c("V1", "V2", "V3", "V4", "V5"))
+
+df_report <- df_report |> mutate(V1 = ifelse(V1 == "raw", NA, V1))
+
+df_report <- df_report |>
+  unite(V1, V2, col = "sample.id", sep = "", na.rm = TRUE) 
+
+df_report <- df_report |> dplyr::select(-V3, -V4, -V5)
+
+# collect columns where evidence was used
+list_of_used_columns <- c()
+list_of_used_columns <- c(list_of_used_columns,
+                          "IMPACT", 
+                          "genotype", 
+                          "Inheritance", 
+                          "CLIN_SIG", 
+                          "gnomAD_AF", 
+                          "comp_het_flag",
+                          # pathgenicty predics
+                          "Strong_pathogenic_GE",
+                          "Moderate_pathogenic_GE",
+                          "Supporting_pathogenic_GE"
+                          # ACMG_PP3 columns set 1:
+                          #"CADD_PHRED", "REVEL_rankscore", "MetaLR_pred",
+                          #"MutationAssessor_pred", "SIFT_label", "PolyPhen_label"
+)
+
+df_report |> names()
+
+df_report_main_text <- df_report |> 
+  # filter(ACMG_score > 2 ) |>
+  dplyr::select(sample.id, 
+                ACMG_total_score,
+                ACMG_score, 
+                ACMG_count, 
+                ACMG_highest, 
+                SYMBOL, 
+                rownames,
+                chr,
+                HGVSp,
+                HGVSc,
+                Consequence,
+                list_of_used_columns
+  ) |> 
+  arrange(SYMBOL,
+          desc(ACMG_score),
+          sample.id)
+
+colnames(df_report_main_text)[colnames(df_report_main_text) == 'Strong_pathogenic_GE'] <- 'Strong_patho'
+colnames(df_report_main_text)[colnames(df_report_main_text) == 'Moderate_pathogenic_GE'] <- 'Moder_patho'
+colnames(df_report_main_text)[colnames(df_report_main_text) == 'Supporting_pathogenic_GE'] <- 'Suppor_patho'
+
+# saveRDS(df_report, file="../../data/singlecase/df_report.Rds")
+
+saveRDS(df_report_main_text,  paste0("../../data/ACMGuru_post_ppi/df_report_main_text_", paste(geneset_MCL_ID, collapse="_"), ".Rds"))
+
+# collapse Inheritance column 
+# df_report_main_text_inhrt <- 
+#   df_report_main_text %>%
+#   # group_by(across(-c(Inheritance, sample.id))) %>%
+#   group_by(across(-c(Inheritance))) %>%
+#   summarise(Inheritance = paste(Inheritance, collapse = ", "), .groups = 'drop')
+
+write.csv(df_report_main_text,  paste0("../../data/ACMGuru_post_ppi/AMCGuru_post_ppi_df_report_main_text_", paste(geneset_MCL_ID, collapse="_"), ".csv"))
+
+write.csv(df_report,  paste0("../../data/ACMGuru_post_ppi/AMCGuru_post_ppi_df_report_", paste(geneset_MCL_ID, collapse="_"), ".csv"))
+
+df_report |> 
+  filter(ACMG_total_score > 1) |> 
+  dplyr::select(SYMBOL) |> unique()
+
+# Go now to cohort_summary_curated_r/cohort_summary_post_ppi.R

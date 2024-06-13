@@ -42,27 +42,31 @@ Contributions and insights from readers are highly encouraged, as we aim to fost
 ## Code Structure and Documentation
 This repository houses scripts crucial for interpreting variant data to determine pathogenicity in genetic studies. The directory structure and contents are designed to facilitate the analysis of chromosome-split gVCF files processed with GATK and annotated with Ensembl VEP alongside a set of annotation databases.
 
-### Directory Structure
+# 0. Directory Structure and File Descriptions
+
 ```
 .
-├── ACMGuru_singlecase_vcurrent.R      # Main script for ACMG-based variant interpretation
-├── directory_structure.txt            # Documentation of the directory structure
-├── stand_alone_vcf_to_table           # Directory containing scripts to process VCF files
-│   ├── gather.R                       # Script to gather data from processed VCF
-│   ├── genotype_clean.R               # Script to clean and format genotype data
-│   ├── progress_bar.R                 # Displays progress during data processing
-│   ├── stand_alone_vcf_to_table.R     # Main script to convert VCF to table format
-│   └── vcf_to_tables.R                # Processes VCF files to extract variant data
-└── sync.sh                            # Bash script to synchronize essential data files
-```
+├── ACMGuru_post_ppi
+│   └── ACMGuru_post_ppi_vcurrent.R
+├── ACMGuru_singlecase
+│   ├── ACMGuru_singlecase_vcurrent.R
+│   └── sync.sh
+├── cohort_summary_curated
+│   ├── cohort_summary_post_ppi_vcurrent.R
+│   ├── cohort_summary_post_singlecase_vcurrent.R
+│   ├── cohort_summary_vcurrent.R
+│   └── sync.sh
+├── directory_structure.txt
+├── document.sh
+└── stand_alone_vcf_to_table
+    ├── gather.R
+    ├── genotype_clean.R
+    ├── progress_bar.R
+    ├── stand_alone_vcf_to_table.R
+    └── vcf_to_tables.R
 
-### Script Descriptions
-- **ACMGuru_singlecase_vcurrent.R**: Implements ACMG guidelines to interpret variants for single-case analysis. It utilizes multiple libraries such as `dplyr`, `ggplot2`, and `stringr` to process genetic data, annotate it with clinical significance, and visually represent the findings.
-- **gather.R** and **vcf_to_tables.R**: These scripts are part of a pipeline within the `stand_alone_vcf_to_table` directory that processes VCF files, extracting relevant genetic information and structuring it into a usable format for further analysis.
-- **genotype_clean.R**: Cleans and normalizes genotype information to ensure consistency across datasets, which is critical for accurate variant interpretation.
-- **progress_bar.R**: Provides a visual indicator of progress when processing large genetic datasets, enhancing user experience during long-running operations.
-- **stand_alone_vcf_to_table.R**: Coordinates the conversion of VCF files from initial read to final table output, ensuring all components function seamlessly.
-- **sync.sh**: A utility script to synchronize or update genetic data files from remote or local sources to the current project directory, ensuring data consistency.
+4 directories, 14 files
+```
 
 ### Inputs
 - **Chromosome-split gVCF Files**: These are the primary inputs, processed using GATK and annotated with Ensembl VEP and other annotation databases to ensure comprehensive genetic data analysis.
@@ -74,4 +78,72 @@ This repository houses scripts crucial for interpreting variant data to determin
 ### Usage
 - To perform a full variant analysis, run the `ACMGuru_singlecase_vcurrent.R` script, which orchestrates the variant interpretation using ACMG guidelines, outputting potential pathogenic variants and detailed visualizations.
 - Use `sync.sh` to ensure all necessary data files are present and up to date before starting your analysis.
+
+### Script Descriptions
+The project directory contains several R scripts and directories, each dedicated to specific tasks or components of the project. The main directories include scripts for post-processing, handling single cases, summarizing cohorts, and converting VCF files to tables. Here's a breakdown:
+
+- **ACMGuru_post_ppi**: Contains scripts for post-processing proteomics data.
+  - `ACMGuru_post_ppi_vcurrent.R`: Handles variant data post-protein interaction analysis, integrating several bioinformatics resources and libraries such as dplyr, tidyr, and ggplot2 for data manipulation and visualization.
+  
+- **ACMGuru_singlecase**: Manages scripts specific to single case studies in genetic research.
+  - `ACMGuru_singlecase_vcurrent.R`: Script for analyzing single case studies, applying ACMG guidelines to genetic variants, and incorporating custom scripts for converting VCF files to more usable table formats.
+  - `sync.sh`: A shell script to synchronize project data with a remote server using rsync.
+
+- **cohort_summary_curated**: Scripts for summarizing cohort data in a curated format.
+  - `cohort_summary_post_ppi_vcurrent.R`, `cohort_summary_post_singlecase_vcurrent.R`, `cohort_summary_vcurrent.R`: These scripts summarize different aspects of cohort data post-analysis, applying statistical summaries and data visualization.
+  - `sync.sh`: Synchronizes the latest sample list and other data from a remote location.
+
+- **stand_alone_vcf_to_table**: Contains scripts for converting VCF files into table formats, simplifying the analysis of genetic variants. The scripts together act as a pipeline to process VCF files, extract and clean genotype data, and display progress.
+	- **stand_alone_vcf_to_table.R**: Coordinates the conversion of VCF files from initial read to final table output, ensuring all components function seamlessly.
+	- **gather.R** and **vcf_to_tables.R**: These scripts are part of a pipeline within the `stand_alone_vcf_to_table` directory that processes VCF files, extracting relevant genetic information and structuring it into a usable format for further analysis.
+	- **genotype_clean.R**: Cleans and normalizes genotype information to ensure consistency across datasets, which is critical for accurate variant interpretation.
+	- **progress_bar.R**: Provides a visual indicator of progress when processing large genetic datasets, enhancing user experience during long-running operations.
+- **stand_alone_vcf_to_table order**:
+    - for every VCF:
+        - source("gather.R")
+            - source("vcf_to_tables.R")
+        - source("genotype_clean.R")
+        - source("progress_bar.R")
+    - merge results into single dataframe.
+
+The root directory contains:
+- `directory_structure.txt`: Lists the directory structure for documentation purposes.
+- `document.sh`: Shell script that generates the directory structure and embeds it into a documentation file, along with the content of R and shell scripts found throughout the project.
+
+### Script Details
+
+#### `ACMGuru_post_ppi_vcurrent.R`
+- **Purpose**: This script performs post-protein interaction analysis for genetic variants, including reading VCF files, applying ACMG standards to assess variant pathogenicity, and visualizing results.
+- **Key Operations**:
+  - Load necessary libraries like `dplyr`, `ggplot2`.
+  - Read and manipulate genetic data.
+  - Implement complex genetic variant filtering logic based on ACMG guidelines.
+  - Generate comprehensive plots to visualize the distribution and impact of genetic variants.
+
+#### `ACMGuru_singlecase_vcurrent.R`
+- **Purpose**: Analyzes genetic data from single case studies, applying various bioinformatics techniques to assess the impact of genetic variants.
+- **Key Operations**:
+  - Incorporate data from external bioinformatics resources.
+  - Filter and annotate genetic variants.
+  - Visualize data through various ggplot2 plots.
+  - Output results in formats suitable for publication or further analysis.
+
+#### `cohort_summary_curated/cohort_summary_vcurrent.R`
+- **Purpose**: Summarizes genetic data from cohorts, integrating clinical and phenotypic data to enhance the understanding of genetic impacts on populations.
+- **Key Operations**:
+  - Merge multiple data sources.
+  - Apply statistical methods to summarize data.
+  - Produce detailed plots and tables summarizing cohort characteristics.
+
+#### `stand_alone_vcf_to_table/stand_alone_vcf_to_table.R`
+- **Purpose**: Converts VCF files into table formats, facilitating easier data manipulation and analysis.
+- **Key Operations**:
+  - Read VCF files using `VariantAnnotation` library.
+  - Clean and transform genotype information.
+  - Output data in a structured table format.
+
+### Usage
+
+To utilize these scripts, you should have R installed on your system along with the required libraries. Each script can be run independently, depending on the specific needs of the analysis. Data paths and specific parameters should be adjusted in the scripts according to your dataset and analysis requirements.
+
 
