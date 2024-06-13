@@ -20,29 +20,23 @@ Each tool and method used in our study is documented in detail to aid reproducib
 Contributions and insights from readers are highly encouraged, as we aim to foster a collaborative environment to enhance our understanding of sepsis at the genetic level.
 
 # Script order
-* **Interpret**
-* 1. AMCGuru_singlecase
-    - requires: stand_alone_vcf_to_table
-* AMCGuru_post_ppi
-* archipelag
-* untangleR
-
-* **Data prep**
-* joint_pca
-* ppi
-* ProteoMCLustR_github_clone
- 
-* **VSAT**
-* variant_level/
-* gene_level/
- 
+1. Data preperation
+    - joint_pca
+    - ppi
+    - ProteoMCLustR_github_clone
+2. VSAT
+    - variant_level/
+    - gene_level/
+3. Interpretation
+    - AMCGuru_singlecase
+        - requires: stand_alone_vcf_to_table
+    - AMCGuru_post_ppi
+        - requires: stand_alone_vcf_to_table
+    - archipelag
+    - untangleR
 
 
-# 1.Single variant analysis
-## Code Structure and Documentation
-This repository houses scripts crucial for interpreting variant data to determine pathogenicity in genetic studies. The directory structure and contents are designed to facilitate the analysis of chromosome-split gVCF files processed with GATK and annotated with Ensembl VEP alongside a set of annotation databases.
-
-# 0. Directory Structure and File Descriptions
+# Directory Structure and File Descriptions
 
 ```
 .
