@@ -136,7 +136,7 @@ The root directory contains:
   - Produce detailed plots and tables summarizing cohort characteristics.
 
 #### `stand_alone_vcf_to_table/stand_alone_vcf_to_table.R`
-- **Purpose**: Converts VCF files into table formats, facilitating easier data manipulation and analysis.
+- **Purpose**: Converts VCF files into table formats, facilitating easier data manipulation and analysis. Reduces memory and time requirements for processing large VCF sets in R.
 - **Key Operations**:
   - Read VCF files using `VariantAnnotation` library.
   - Clean and transform genotype information.
