@@ -1,4 +1,4 @@
-Evidence_type	label	Evidence	Manual_adjustment	ACGM_label	Caveat_checks	Criteria
+Evidence_type	label	Evidence	Manual_adjustment	ACMG_label	Caveat_checks	Criteria
 pathogenicity	VS1	very_strong		PVS1	4	"null variant (nonsense, frameshift, canonical +- 2 splice sites, initiation codon, single or multiexon deletion) in a gene where LOF is a known mechanism of disease"
 pathogenicity	S1	strong		PS1	1	Same amino acid change as a previously established pathogenic variant regardless of nucleotide change
 pathogenicity	S2	strong	manual	PS2	1	De novo (both maternity and paternity confirmed) in a patient with the disease and no family history

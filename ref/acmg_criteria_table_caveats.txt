@@ -1,4 +1,4 @@
-Evidence_type	label	Evidence	Manual_adjustment	ACGM_label	Caveat_number	Caveat
+Evidence_type	label	Evidence	Manual_adjustment	ACMG_label	Caveat_number	Caveat
 pathogenicity	VS1	very_strong		PVS1	1	LoF not disease causing for gene
 pathogenicity	VS1	very_strong		PVS1	2	LoF at 3prime end (loftee)
 pathogenicity	VS1	very_strong		PVS1	3	exon skipping splce that leave functional protein
@@ -35,4 +35,4 @@ benign	P4	supporting		BP4	1	"Prediction methods may have used the same data sour
 benign	P5	supporting	manual	BP5		
 benign	P6	supporting		BP6		
 benign	P7	supporting		BP7		
-benign	P8	supporting	other	BP8
+benign	P8	supporting	other	BP8		

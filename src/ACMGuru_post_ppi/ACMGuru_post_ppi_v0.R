@@ -201,115 +201,6 @@ df <- df %>%
 
 # acmg_filters ----
 
-# BA1 ----
-df_acmg |> filter(ACMG_label == "BA1") |> dplyr::select(Criteria)
-# Allele frequency is >5% in Exome Sequencing Project, 1000 Genomes Project, or Exome Aggregation Consortium
-df <- df %>% dplyr::select(ACMG_BA1, everything())
-df$gnomAD_AF <- as.numeric(df$gnomAD_AF)
-gnomad_BA1 <- .05 
-df$ACMG_BA1 <- NA
-df$ACMG_BA1 <- ifelse(df$gnomAD_AF > gnomad_BA1, "BA1", NA)
-# df |> filter(ACMG_BA1 == "BA1") |> dplyr::select(gnomAD_AF)
-
-# BS1 ----
-df_acmg |> filter(ACMG_label == "BS1") |> dplyr::select(Criteria)
-# Allele frequency is greater than expected for disorder
-# duplicate previous frequency unless other info
-df <- df %>% dplyr::select(ACMG_BS1, everything())
-df$gnomAD_AF <- as.numeric(df$gnomAD_AF)
-gnomad_BS1 <- .05 
-df$ACMG_BS1 <- NA
-df$ACMG_BS1 <- ifelse(df$gnomAD_AF > gnomad_BS1, "BS1", NA)
-# df |> filter(ACMG_BS1 == "BS1") |> dplyr::select(gnomAD_AF)
-
-# BS2 ----
-df_acmg |> filter(ACMG_label == "BS2") |> dplyr::select(Criteria)
-# Observed in a healthy adult individual for a recessive (homozygous), dominant (heterozygous), or X-linked (hemizygous) disorder, with full penetrance expected at an early age
-# already removed
-df$ACMG_BS2 <- NA
-df <- df %>% dplyr::select(ACMG_BS2, everything())
-# df |> filter(ACMG_BS2 == "BS2") |> dplyr::select(gnomAD_AF) 
-
-# BS3 ----
-df_acmg |> filter(ACMG_label == "BS3") |> dplyr::select(Criteria)
-# Well-established in vitro or in vivo functional studies show no damaging effect on protein function or splicing
-# already removed
-df$ACMG_BS3 <- NA
-df <- df %>% dplyr::select(ACMG_BS3, everything())
-# df |> filter(ACMG_BS3 == "BS3") |> dplyr::select(gnomAD_AF) 
-
-# BS4 ----
-df_acmg |> filter(ACMG_label == "BS4") |> dplyr::select(Criteria)
-# Lack of segregation in affected members of a family
-# not available
-df$ACMG_BS4 <- NA
-df <- df %>% dplyr::select(ACMG_BS4, everything())
-# df |> filter(ACMG_BS4 == "BS4") |> dplyr::select(gnomAD_AF) 
-
-# BS5 ----
-df_acmg |> filter(ACMG_label == "BS5") |> dplyr::select(Criteria)
-# The user has additional (value) strong benign evidence
-# not available
-df$ACMG_BS5 <- NA
-df <- df %>% dplyr::select(ACMG_BS5, everything())
-# df |> filter(ACMG_BS5 == "BS5") |> dplyr::select(gnomAD_AF) 
-
-# BP1 ----
-df_acmg |> filter(ACMG_label == "BP1") |> dplyr::select(Criteria)
-# Missense variant in a gene for which primarily truncating variants are known to cause disease
-# not available
-df$ACMG_BP1 <- NA
-df <- df %>% dplyr::select(ACMG_BP1, everything())
-# df |> filter(ACMG_BP1 == "BP1") |> dplyr::select(gnomAD_AF) 
-
-# BP2 ----
-df_acmg |> filter(ACMG_label == "BP2") |> dplyr::select(Criteria)
-# Observed in trans with a pathogenic variant for a fully penetrant dominant gene/disorder or observed in cis with a pathogenic variant in any inheritance pattern
-df$ACMG_BP2 <- NA
-df <- df %>% dplyr::select(ACMG_BP2, everything())
-
-# BP3 ----
-df_acmg |> filter(ACMG_label == "BP3") |> dplyr::select(Criteria)
-# In-frame deletions/insertions in a repetitive region without a known function
-df$ACMG_BP3 <- NA
-df <- df %>% dplyr::select(ACMG_BP3, everything())
-# Custom logic for BP3
-
-# BP4 ----
-df_acmg |> filter(ACMG_label == "BP4") |> dplyr::select(Criteria)
-# Multiple lines of computational evidence suggest no impact on gene or gene product (conservation, evolutionary, splicing impact, etc.)
-df$ACMG_BP4 <- NA
-df <- df %>% dplyr::select(ACMG_BP4, everything())
-# Custom logic for BP4
-
-# BP5 ----
-df_acmg |> filter(ACMG_label == "BP5") |> dplyr::select(Criteria)
-# Variant found in a case with an alternate molecular basis for disease
-df$ACMG_BP5 <- NA
-df <- df %>% dplyr::select(ACMG_BP5, everything())
-# Custom logic for BP5
-
-# BP6 ----
-df_acmg |> filter(ACMG_label == "BP6") |> dplyr::select(Criteria)
-# Reputable source recently reports variant as benign, but the evidence is not available to the laboratory to perform an independent evaluation
-df$ACMG_BP6 <- NA
-df <- df %>% dplyr::select(ACMG_BP6, everything())
-# Custom logic for BP6
-
-# BP7 ----
-df_acmg |> filter(ACMG_label == "BP7") |> dplyr::select(Criteria)
-df$ACMG_BP7 <- NA
-df <- df %>% dplyr::select(ACMG_BP7, everything())
-# Custom logic for BP7
-
-# BP8 ----
-df_acmg |> filter(ACMG_label == "BP8") |> dplyr::select(Criteria)
-# A synonymous (silent) variant for which splicing prediction algorithms predict no impact to the splice consensus sequence nor the creation of a new splice site AND the nucleotide is not highly conserved
-# already removed
-df$ACMG_BP8 <- NA
-df <- df %>% dplyr::select(ACMG_BP8, everything())
-# Custom logic for BP8
-
 # PVS1 ----
 # PVS1 are null variants where IMPACT=="HIGH" and inheritance match, in gene where LoF cause disease.
 df$ACMG_PVS1 <- NA
@@ -677,24 +568,13 @@ ggsave(paste("../../images/AMCGuru_post_ppi/", output_ID, "pathogenicity_distrib
 
 # acmg tally  ----
 # List of all ACMG labels
-# acmg_labels <- c("ACMG_PVS1", "ACMG_PS1", "ACMG_PS2", "ACMG_PS3", "ACMG_PS4", "ACMG_PS5", "ACMG_PM1", "ACMG_PM2", "ACMG_PM3", "ACMG_PM4", "ACMG_PM5", "ACMG_PM6", "ACMG_PM7", "ACMG_PP1", "ACMG_PP2", "ACMG_PP3", "ACMG_PP4")
-
-# Transform 'Evidence_type' to 'P' for pathogenic and 'B' for benign
-df_acmg$code_prefix <- ifelse(df_acmg$Evidence_type == "pathogenicity", "P", "B")
-
-# Create the ACMG code by combining the new prefix and the label, prepending 'ACMG_'
-df_acmg$ACMG_code <- paste0("ACMG_", df_acmg$code_prefix, df_acmg$label)
-
-acmg_labels <- df_acmg$ACMG_code
-print(acmg_labels)
-
-# df_acmg$ACMG_label
-names(df) |> head(30) |> as.character()
+acmg_labels <- c("ACMG_PVS1", "ACMG_PS1", "ACMG_PS2", "ACMG_PS3", "ACMG_PS4", "ACMG_PS5", 
+                 "ACMG_PM1", "ACMG_PM2", "ACMG_PM3", "ACMG_PM4", "ACMG_PM5", "ACMG_PM6", 
+                 "ACMG_PM7", "ACMG_PP1", "ACMG_PP2", "ACMG_PP3", "ACMG_PP4")
 
 # Check if each ACMG column exists, if not create it and fill with NA
 for (acmg_label in acmg_labels) {
   if (!acmg_label %in% names(df)) {
-    print("missing label")
     df[[acmg_label]] <- NA
   }
 }
@@ -801,41 +681,18 @@ df |>
 # Likely Benign if between -6 and -1,
 # Benign if less than or equal to -7.
 
-# df <-  df |> dplyr::select("ACMG_PVS1", "ACMG_PS1", "ACMG_PS2", "ACMG_PS3", "ACMG_PS4", "ACMG_PS5", 
-#                  "ACMG_PM1", "ACMG_PM2", "ACMG_PM3", "ACMG_PM4", "ACMG_PM5", "ACMG_PM6", 
-#                  "ACMG_PM7", "ACMG_PP1", "ACMG_PP2", "ACMG_PP3", "ACMG_PP4",
-#                  everything())
-
-df <-  df |> dplyr::select(acmg_labels, everything())
+df <-  df |> dplyr::select("ACMG_PVS1", "ACMG_PS1", "ACMG_PS2", "ACMG_PS3", "ACMG_PS4", "ACMG_PS5", 
+                 "ACMG_PM1", "ACMG_PM2", "ACMG_PM3", "ACMG_PM4", "ACMG_PM5", "ACMG_PM6", 
+                 "ACMG_PM7", "ACMG_PP1", "ACMG_PP2", "ACMG_PP3", "ACMG_PP4",
+                 everything())
 
 # df <- df %>% dplyr::select(ACMG_highest, ACMG_score, ACMG_count,ACMG_PP3:ACMG_PVS1, ACMG_PS2:ACMG_PP4, everything())
 
 # Define scores for each ACMG label
-# acmg_scores <- c("PVS1" = 8,
-# 					  "PS1" = 4, "PS2" = 4, "PS3" = 4, "PS4" = 4, "PS5" = 4,
-# 					  "PM1" = 2, "PM2" = 2, "PM3" = 2, "PM4" = 2, "PM5" = 2,
-# 					  "PP3" = 1)
-
-# Define scores for Pathogenic criteria
-pathogenic_scores <- c(
-  "PVS1" = 8,
-  setNames(rep(4, 5), paste0("PS", 1:5)),
-  setNames(rep(2, 7), paste0("PM", 1:7)),
-  "PP3" = 1
-)
-
-# Define scores for Benign criteria
-benign_scores <- c(
-  "BA1" = -8,
-  setNames(rep(-4, 5), paste0("BS", 1:5)),
-  setNames(rep(-1, 8), paste0("BP", 1:8))
-)
-
-# Combine both scoring systems into one vector
-acmg_scores <- c(pathogenic_scores, benign_scores)
-
-# Print the complete ACMG scoring system
-print(acmg_scores)
+acmg_scores <- c("PVS1" = 8,
+					  "PS1" = 4, "PS2" = 4, "PS3" = 4, "PS4" = 4, "PS5" = 4,
+					  "PM1" = 2, "PM2" = 2, "PM3" = 2, "PM4" = 2, "PM5" = 2,
+					  "PP3" = 1)
 
 # Create ACMG_score column by looking up ACMG_highest in acmg_scores
 df$ACMG_score <- acmg_scores[df$ACMG_highest]
@@ -846,19 +703,18 @@ df <- df |> dplyr::select(ACMG_score, everything())
 
 # Total ACMG score ----
 # List of all ACMG columns
-# acmg_columns <- grep("ACMG_P", colnames(df), value = TRUE)
-# Update the way columns are selected based on the specific acmg_labels. this is now redundant, switch to "acmg_labels" insted of acmg_columns
-# acmg_labels <- colnames(df)[colnames(df) %in% acmg_labels]
+acmg_columns <- grep("ACMG_P", colnames(df), value = TRUE)
+acmg_columns
 
 # Mutate all ACMG columns
 df <- df %>% 
-  mutate_at(acmg_labels, function(x) acmg_scores[x])
+  mutate_at(acmg_columns, function(x) acmg_scores[x])
 
 # Replace NAs with 0 in ACMG columns only
-df[acmg_labels] <- lapply(df[acmg_labels], function(x) ifelse(is.na(x), 0, x))
+df[acmg_columns] <- lapply(df[acmg_columns], function(x) ifelse(is.na(x), 0, x))
 
 # Calculate total ACMG score
-df$ACMG_total_score <- rowSums(df[acmg_labels])
+df$ACMG_total_score <- rowSums(df[acmg_columns])
 
 df <- df |> dplyr::select(ACMG_total_score, everything())
 
@@ -870,7 +726,7 @@ p.acmg_score <- df |>
 	ylab("No. variants") +
 	geom_text(stat='count', aes(label=..count.., y=..count..+50), color = "black") + 
 	guides(fill=FALSE) +
-	scale_fill_scico(palette = 'bamako', direction = -1) # batlowK, acton, lajolla, lapaz, turku
+	scale_fill_scico(palette = 'bamako', direction = 1) # batlowK, acton, lajolla, lapaz, turku
 p.acmg_score 
 ggsave(paste("../../images/AMCGuru_post_ppi/", output_ID, "acmg_score.pdf", sep = "") ,plot = p.acmg_score )
 
@@ -1123,4 +979,3 @@ df_report |>
   dplyr::select(SYMBOL) |> unique()
 
 # Go now to cohort_summary_curated_r/cohort_summary_post_ppi.R
-
