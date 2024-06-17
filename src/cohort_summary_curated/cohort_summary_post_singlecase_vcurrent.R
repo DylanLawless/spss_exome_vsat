@@ -77,7 +77,7 @@ names(df_report_main_text)
 df <- merge(df_report_main_text, df, by="sample.id", all=T)
 
 df$group <- "singlecase_damaging"
-df$group <- ifelse(is.na(df$ACMG_score), "singlecase_NA", df$group)
+df$group <- ifelse(is.na(df$ACMG_total_score), "singlecase_NA", df$group)
 
 # continuous: hist plots -----
 # Convert the data from wide to long
@@ -352,9 +352,9 @@ ggsave("../../images/cohort_summary_curated/cohort_plots_singlecase_cat_con_blue
 ggsave("../../images/cohort_summary_curated/cohort_plots_singlecase_cat_con_statistic.pdf", plot = patch2, height = 6, width = 6)
 
 # kable latex tables ----
-
+ACMG_total_score_cutoff_pathogenic <- 6
 # df_summaries <- df |> filter(ACMG_score >= 4)
-df_summaries <- df |> filter(ACMG_total_score >= 6)
+df_summaries <- df |> filter(ACMG_total_score >= ACMG_total_score_cutoff_pathogenic)
 
 df_summaries |> 
   group_by(genotype) |>
@@ -374,6 +374,16 @@ df_summaries |>
   kable("latex", booktabs = TRUE)
 
 
+# final table ----
+df_summaries <- df_summaries |> dplyr::select(-Strong_patho, -Moder_patho, -Suppor_patho)
+
+saveRDS(df_summaries, file="../../data/singlecase/ACMGuru_singlecase_df_report_cohort_data.Rds")
+write.csv(df_summaries,  paste0("../../data/singlecase/ACMGuru_singlecase_df_report_cohort_data.csv"))
+
+
+df_dedup <- df_summaries |> dplyr::select(sample.id, study.site: psofa.hem) |> unique()
+write.csv(df_dedup,  paste0("../../data/singlecase/ACMGuru_singlecase_df_report_dedup.csv"))
+
 # df_report_main_text |>
 #   filter(ACMG_total_score >= 6) |> 
 #   dplyr::select(SYMBOL, 
@@ -392,33 +402,155 @@ df_report_main_text %>%
   kable("latex", booktabs = TRUE)
 
 
-# date ----
+
+# Textual clinical report ----
+# Load necessary libraries
+library(dplyr)
+library(stringr)
+
+# Assume df_summaries is pre-loaded and appropriately structured
+df_summaries <- df_summaries %>%
+  mutate(across(where(is.character), as.factor))
+
+df_summaries_length <- length(df_summaries)
+
+# Summarize each column with numeric summaries for numeric data and frequency counts for factors
+summarize_data <- function(data) {
+  data %>%
+    summarise(
+      across(where(is.numeric), 
+             ~ paste(median(., na.rm = TRUE),
+                     "[", min(., na.rm = TRUE), 
+                     "-", max(., na.rm = TRUE), "]"),
+             .names = "{.col}.stats"),
+      across(where(is.factor),
+             ~ paste(names(table(.)), table(.), sep=": ", collapse=", "),
+             .names = "{.col}.distribution"))
+}
+
+# Apply the function to summarize the dataset
+cohort_features <- summarize_data(df_summaries)
+
+print(cohort_features)
+
+# Define variable descriptions based on provided definitions
+# Define variable descriptions and group them by category
+variable_descriptions <- list(
+  "Demographic Information" = list(
+    episode.nr.stats = "Number of previous sepsis episodes registered in the same child",
+    age.days.stats = "Patient age at blood culture sampling in days",
+    gender.distribution = "Gender distribution of the cohort",
+    age.category2.distribution = "Age categories based on the time of blood culture sampling",
+    ethnicity.distribution = "Ethnic background of the cohort"
+  ),
+  "Hospitalization Data" = list(
+    hosp.dur.stats = "Total length of hospital stay in days",
+    hosp.dur.post.bc.stats = "Hospital stay length after blood culture sampling in days",
+    picu.dur.stats = "Total length of stay in the Pediatric Intensive Care Unit (PICU) in days",
+    picu.dur.post.bc.stats = "PICU stay length after blood culture sampling in days",
+    hospital.adm.delay.stats = "Delay in hospital admission from time of initial presentation in days"
+    # hosp.dis.distribution = "Dates of hospital discharges",
+    # picu.dis.distribution = "Dates of PICU discharges"
+  ),
+  "Clinical Outcomes" = list(
+    cons05.score.stats = "Total number of organ failures as defined by the 2005 consensus",
+    pelod.score.stats = "Total number of organ failures as defined by the Pediatric Logistic Organ Dysfunction Score (PELOD-2)",
+    psofa.score.stats = "Total number of organ failures as defined by the 2017 pSOFA",
+    outcome.death.distribution = "Mortality outcomes within 30 days post-admission",
+    outcome.picu.los.distribution = "Impact of PICU length of stay on outcomes",
+    outcome.death.picu.distribution = "Mortality outcomes specifically within the PICU settings"
+  ),
+  "Organ Failures and Sepsis Details" = list(
+    cons05.cvs.distribution  = "Cardiovascular failure score under 2005 consensus definitions",
+    cons05.resp.distribution = "Respiratory failure score under 2005 consensus definitions",
+    cons05.cns.distribution = "Central nervous system failure score under 2005 consensus definitions",
+    cons05.ren.distribution = "Renal failure score under 2005 consensus definitions",
+    cons05.hep.distribution = "Hepatic failure score under 2005 consensus definitions",
+    cons05.hem.distribution = "Hematological failure score under 2005 consensus definitions"
+  ),
+  "Pathogen Information" = list(
+    clin.focus.distribution = "Primary clinical focus or reasons for medical intervention",
+    pathogen.grp.distribution = "Types of pathogens identified in blood cultures",
+    cvc.clabsi.distribution = "Incidence of central venous catheter-associated bloodstream infections"
+  )
+)
+
+# sample.id.distribution = "Unique identifier for each episode, used to track blood samples",
+# ACMG_highest.distribution = "Highest classification of genetic variants per the ACMG standards",
+# SYMBOL.distribution = "Gene symbols associated with observed genetic variants",
+# rownames.distribution = "Row identifiers based on the structure of the dataset",
+# chr.distribution = "Chromosomal locations for the identified genetic variants",
+# HGVSp.distribution = "Protein changes caused by genetic variants",
+# HGVSc.distribution = "Coding DNA sequence changes due to genetic variants",
+# Consequence.distribution = "Functional consequences of genetic variants on protein",
+# IMPACT.distribution = "Impact level of genetic variants according to their severity",
+# Inheritance.distribution = "Inheritance patterns of identified genetic conditions",
+# CLIN_SIG.distribution = "Clinical significance of identified genetic variants",
+# bc.sampling.distribution = "Dates when blood cultures were sampled",
+# hosp.adm.distribution = "Dates of hospital admissions",
+# picu.adm.distribution = "Dates of PICU admissions",
+# death.date.distribution = "Dates of death within the cohort",
+# hosp.dis.distribution = "Dates of hospital discharges",
+# picu.dis.distribution = "Dates of PICU discharges",
 
 
-# df$hosp.adm
-# library(lubridate)
+# Function to produce the full clinical report with subheadings and missing data check
+create_full_report <- function(descriptions, feature_list) {
+  report <- ""
+  for (category in names(descriptions)) {
+    report <- paste(report, sprintf("### %s\n", category), sep="\n")  # Add category heading
+    for (variable in names(descriptions[[category]])) {
+      description <- descriptions[[category]][[variable]]
+      # Check if the variable exists in the dataset
+      if (!is.null(feature_list[[variable]])) {
+        summary <- feature_list[[variable]]
+        report <- paste(report, sprintf("%s (%s): %s.", description, variable, summary), sep=" ")
+      } else {
+        # If the variable is missing, provide a note in the report
+        report <- paste(report, sprintf("%s (%s): \n !!! Data not available: check the variable name in variable_descriptions !!! \n ", description, variable), sep=" ")
+      }
+    }
+    report <- paste(report, "\n", sep="\n")  # Add spacing between groups for readability
+  }
+  return(report)
+}
+
+# Example usage
+full_report <- create_full_report(variable_descriptions, cohort_features)
+cat(full_report)
+
+
+
+# Define the text to prepend with dynamic values included
+prepend_text <- paste0(
+  "ACMGuru also performed a cohort summary for single case analysis using the study handbook variables. ",
+  "Variants which were considered pathogenic or likely pathogenic (ACMG total score = ", 
+  ACMG_total_score_cutoff_pathogenic, 
+  ") were retained. After analysis, ", 
+  df_summaries_length, 
+  " patients were identified. Values are indicated as median [min - max]."
+)
+
+# Print to check
+cat(prepend_text)
+
 # 
-# # Define the date columns
-# date_columns <- c("hosp.adm", "bc.sampling", "picu.adm", "death.date", "hosp.dis", "picu.dis")  # Replace with the actual column names containing the dates
-# 
-# # Convert date columns to Date class
-# df[date_columns] <- lapply(df[date_columns], function(x) as.Date(x, format = "%d.%m.%y"))
-# 
-# # Create a list of ggplot objects for date columns
-# plots_date <- lapply(date_columns, function(column) {
-#   ggplot(df, aes_string(x = column)) +
-#     geom_bar(fill = "blue", color = "black") +
-#     labs(x = column, y = "Count") +
-#     theme_minimal() +
-#     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-#     scale_x_date(date_labels = "%Y-%m-%d")  # Customize date labels if needed
-# })
-# 
-# # Print plots for date columns
-# for (i in seq_along(plots_date)) {
-#   print(plots_date[[i]])
-# }
-# 
-# 
-# # Save the arranged plots to a PDF
-# ggsave("plots_dates.pdf", plot = gridExtra::marrangeGrob(grobs = plots_date, ncol = 2, nrow = 2))
+# The total score is then compared to thresholds to assign the final verdict:
+# 	
+# Pathogenic if greater than or equal to 10,
+# Likely Pathogenic if between 6 and 9 inclusive,
+# Uncertain Significance if between 0 and 5,
+# Likely Benign if between -6 and -1,
+# Benign if less than or equal to -7.
+
+# Combine the prepend text with the full report
+full_report_with_intro <- paste(prepend_text, full_report, sep="")
+
+# Print the full report with intro to the console
+cat(full_report_with_intro)
+
+# Define the file path (adjust the path as needed for your directory structure)
+text_path <- "../../data/singlecase/ACMGuru_singlecase_df_report_clinical_text.txt"
+
+# Save the report as a text file
+writeLines(full_report_with_intro, text_path)
