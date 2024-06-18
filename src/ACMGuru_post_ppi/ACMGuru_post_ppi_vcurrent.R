@@ -416,9 +416,9 @@ saveRDS(df_report_main_text,  paste0("../../data/ACMGuru_post_ppi/df_report_main
 #   group_by(across(-c(Inheritance))) %>%
 #   summarise(Inheritance = paste(Inheritance, collapse = ", "), .groups = 'drop')
 
-write.csv(df_report_main_text,  paste0("../../data/ACMGuru_post_ppi/AMCGuru_post_ppi_df_report_main_text_", paste(geneset_MCL_ID, collapse="_"), ".csv"))
+write.csv(df_report_main_text,  paste0("../../data/ACMGuru_post_ppi/AMCGuru_post_ppi_genetic_df_report_main_text_", paste(geneset_MCL_ID, collapse="_"), ".csv"))
 
-write.csv(df_report,  paste0("../../data/ACMGuru_post_ppi/AMCGuru_post_ppi_df_report_", paste(geneset_MCL_ID, collapse="_"), ".csv"))
+write.csv(df_report,  paste0("../../data/ACMGuru_post_ppi/AMCGuru_post_ppi_genetic_df_report_", paste(geneset_MCL_ID, collapse="_"), ".csv"))
 
 df_report |> 
   filter(ACMG_total_score > 1) |> 

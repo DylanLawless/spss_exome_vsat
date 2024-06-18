@@ -1,4 +1,4 @@
-# AMCGuru ----
+# ACMGuru ----
 library(data.table)
 library(dplyr)
 library(tidyr)
@@ -290,7 +290,7 @@ saveRDS(df_report, file=paste0("../../data/", output_directory, "/df_report.Rds"
 saveRDS(df_report_main_text, file=paste0("../../data/", output_directory, "/df_report_main_text.Rds"))
 
 geneset_MCL_ID <- "" #ignore pathway level info
-write.csv(df_report_main_text,  paste0("../../data/", output_directory, "/AMCGuru_singlecase_df_report_main_text.csv"))
+write.csv(df_report_main_text,  paste0("../../data/", output_directory, "/ACMGuru_singlecase_genetic_df_report_main_text.csv"))
 
-write.csv(df_report,  paste0("../../data/", output_directory, "/AMCGuru_singlecase_df_report.csv"))
+write.csv(df_report,  paste0("../../data/", output_directory, "/ACMGuru_singlecase_genetic_df_report.csv"))
 

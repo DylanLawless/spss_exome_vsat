@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# R
+# capture.output(sessionInfo(), file = "../session_info.txt")
 
 # Count project size
 echo "This project contains"
