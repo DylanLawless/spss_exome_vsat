@@ -175,7 +175,7 @@ df <- df %>%
   mutate(comp_het_flag = ifelse(chr == "X" & genotype == 2, 1, comp_het_flag)) %>%
   dplyr::select(comp_het_flag, everything())
 
-# source acmg filters ----
+  # source acmg filters ----
 source("../ACMG_filters/acmg_filters.R")
 
 # plot scores ----
@@ -190,7 +190,7 @@ p.acmg_score <- df |>
 	guides(fill=FALSE) +
 	scale_fill_scico(palette = 'bamako', direction = 1) # batlowK, acton, lajolla, lapaz, turku
 p.acmg_score 
-ggsave(paste("../../images/singlecase/", file_suffix, "acmg_score.pdf", sep = "") ,plot = p.acmg_score )
+ggsave(paste("../../images/ACMGuru_singlecase_", file_suffix, "acmg_score.pdf", sep = "") ,plot = p.acmg_score )
 
 
 # panel ----
@@ -198,13 +198,13 @@ ggsave(paste("../../images/singlecase/", file_suffix, "acmg_score.pdf", sep = ""
 patch1 <- (
 	(p.criteria_gene_total) / ( p.variants_per_criteria | p.criteria_per_sample ) / ( p.pathogenicity_distributions | p.acmg_score)
 ) + plot_annotation(tag_levels = 'A')
-ggsave(paste("../../images/singlecase/", file_suffix, "patch1.pdf", sep = "") ,plot = patch1  + plot_annotation(tag_levels = 'A'), width = 8, height = 10 )
+ggsave(paste("../../images/ACMGuru_singlecase_", file_suffix, "patch1.pdf", sep = "") ,plot = patch1  + plot_annotation(tag_levels = 'A'), width = 8, height = 10 )
 
 patch2 <- (
 	(p.criteria_gene_total) / ( p.variants_per_criteria | p.criteria_per_sample ) / ( p.pathogenicity_distributions | p.acmg_score)
 )  | (p.pathogenicity_distributions_engines_threshold) + plot_annotation(tag_levels = 'A')
 # patch2
-ggsave(paste("../../images/singlecase/", file_suffix, "patch2.pdf", sep = "") ,plot = patch2 + plot_annotation(tag_levels = 'A'), width = 16, height = 10 )
+ggsave(paste("../../images/ACMGuru_singlecase_", file_suffix, "patch2.pdf", sep = "") ,plot = patch2 + plot_annotation(tag_levels = 'A'), width = 16, height = 10 )
  
 # plot order
 # p.criteria_count_each_gene

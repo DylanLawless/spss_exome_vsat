@@ -1,0 +1,4 @@
+WORK_DIR="/work/gr-fe/lawless/spss/exome/data/joint"
+SRC_DIR="/work/gr-fe/lawless/spss/exome/src/variant_level"
+VARLEVEL_DIR="/work/gr-fe/lawless/spss/exome/data/variant_level"
+

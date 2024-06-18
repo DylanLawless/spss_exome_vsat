@@ -26,7 +26,8 @@ geneset_MCL_ID[[1]]
 geneset_MCL_ID[[2]]
 
 # geneset_MCL_ID <- "586"
-output_ID <- paste("post_ppi_MCL_ID_", paste(geneset_MCL_ID, collapse="_"), "_", sep = "")
+file_suffix <- paste("post_ppi_MCL_ID_", paste(geneset_MCL_ID, collapse="_"), "_", sep = "")
+output_directory <- "ACMGuru_post_ppi"
 
 f1 <- paste("../../data/post_ppi/bcftools_gatk_norm_maf01.recode_vep_conda_impact_MCL_", geneset_MCL_ID[[1]], ".vcf.gz", sep = "")
 
@@ -110,7 +111,7 @@ hold <- df
 # saveRDS(df, "./df.Rds")
 # df <- readRDS("./df.Rds")
 
-rm(list=setdiff(ls(), c("df",  "df_acmg", "df_acmg_caveat", "geneset_MCL_ID", "output_ID", "hold", "iuis", "varsome")))
+rm(list=setdiff(ls(), c("df",  "df_acmg", "df_acmg_caveat", "geneset_MCL_ID", "file_suffix", "hold", "iuis", "varsome", "file_suffix", "output_directory")))
 gc()
 df <- hold
 
@@ -180,7 +181,7 @@ ac_count_per_var <- df_summaries_grouped |>
 
 ac_count_per_var
 
-ggsave(paste("../../images/AMCGuru_post_ppi/", output_ID, "ac_count_per_var.pdf", sep = "") ,plot = ac_count_per_var )
+ggsave(paste("../../images/AMCGuru_post_ppi_", file_suffix, "ac_count_per_var.pdf", sep = "") ,plot = ac_count_per_var )
 
 # df_desc <- describe(temp)
 # df_desc
@@ -226,7 +227,7 @@ p.acmg_score <- df |>
 	guides(fill=FALSE) +
 	scale_fill_scico(palette = 'bamako', direction = -1) # batlowK, acton, lajolla, lapaz, turku
 p.acmg_score 
-ggsave(paste("../../images/AMCGuru_post_ppi/", output_ID, "acmg_score.pdf", sep = "") ,plot = p.acmg_score )
+ggsave(paste("../../images/AMCGuru_post_ppi_", file_suffix, "acmg_score.pdf", sep = "") ,plot = p.acmg_score )
 
 
 # panel ----
@@ -235,7 +236,7 @@ patch1 <- (
 	(p.criteria_gene_total) / ( p.variants_per_criteria | p.criteria_per_sample ) / ( p.pathogenicity_distributions | p.acmg_score)
 )  | (p.pathogenicity_distributions_engines_threshold) + plot_annotation(tag_levels = 'A')
 patch1
-ggsave(paste("../../images/AMCGuru_post_ppi/", output_ID, "patch1.pdf", sep = "") ,plot = patch1 + plot_annotation(tag_levels = 'A'), width = 16, height = 10 )
+ggsave(paste("../../images/AMCGuru_post_ppi_", file_suffix, "patch1.pdf", sep = "") ,plot = patch1 + plot_annotation(tag_levels = 'A'), width = 16, height = 10 )
  
 # plot order
 # p.criteria_count_each_gene
@@ -282,12 +283,12 @@ var_per_gene <- df_summary_unq_vpg_nc |>
 
 var_per_gene
 
-ggsave(paste("../../images/AMCGuru_post_ppi/", output_ID, "var_per_gene.pdf", sep = "") ,plot = var_per_gene + plot_annotation(tag_levels = 'A'), width = 9, height = 3 )
+ggsave(paste("../../images/AMCGuru_post_ppi_", file_suffix, "var_per_gene.pdf", sep = "") ,plot = var_per_gene + plot_annotation(tag_levels = 'A'), width = 9, height = 3 )
 
 # joint figure ----
 var_per_gene_ac_count_per_var <- (ac_count_per_var / var_per_gene)
 
-ggsave(paste("../../images/AMCGuru_post_ppi/", output_ID, "var_per_gene_ac_count_per_var.pdf", sep = "") ,plot = var_per_gene_ac_count_per_var + plot_annotation(tag_levels = 'A'), width = 8, height = 5 )
+ggsave(paste("../../images/AMCGuru_post_ppi_", file_suffix, "var_per_gene_ac_count_per_var.pdf", sep = "") ,plot = var_per_gene_ac_count_per_var + plot_annotation(tag_levels = 'A'), width = 8, height = 5 )
 
 # Report ----
 df_report <- df
@@ -312,68 +313,6 @@ df_archi <- df_archi %>%
 	mutate(CHR = str_replace(CHR, "chr", ""))
 
 saveRDS(df_archi, paste0("../../data/archipelago/archipelago", paste(geneset_MCL_ID, collapse="_"), ".R"))
-
-# PS4 method ----
-
-# df$ACMG_PS4 <- NA
-# df <- df %>% dplyr::select(ACMG_PS4, everything())
-
-# temp <- df %>% dplyr::select(sample, rownames, genotype, cohort_pheno)
-# 
-# temp <- temp %>% filter(rownames == "chr21:10485736_T/C")
-# temp <- temp %>% unique()
-# 
-# # Create a subset of the data with only cases (cohort_pheno == 1)
-# cases <- temp %>%
-# 	filter(cohort_pheno == "1")
-# 
-# # Create a subset of the data with only controls (cohort_pheno == 0)
-# controls <- temp %>%
-# 	filter(cohort_pheno == "0")
-# 
-# # Define a function to perform the test for a given variant
-# test_variant <- function(variant_name) {
-# 	# Calculate the contingency table for the variant
-# 	table_var <- table(cases$genotype[cases$rownames == variant_name],
-# 							 controls$genotype[controls$rownames == variant_name])
-# 	
-# 	# Perform a Fisher's exact test for the difference between cases and controls
-# 	fisher.test(table_var)$p.value
-# }
-# 
-# # Apply the test_variant function to all variants and store the p-values in a list
-# p_values <- lapply(unique(df$rownames), test_variant)
-# 
-# # Convert the list of p-values to a data frame and add the variant names as a column
-# results <- data.frame(variant_name = unique(df$rownames),
-# 							 p_value = unlist(p_values))
-
-# Notes ----
-# CADD_PHRED >30 likely deleterious. Variants with scores over 30 are predicted to be the 0.1% most deleterious possible substitutions in the human genome. We strongly recommend the actual score is used when assessing a variant and a cut-off appropriate to your requirements is chosen.
-
-# REVEL  It integrates scores from MutPred, FATHMM v2.3, VEST 3.0, PolyPhen-2, SIFT, PROVEAN, MutationAssessor, MutationTaster, LRT, GERP++, SiPhy, phyloP, and phastCons. Score range from 0 to 1 and variants with higher scores are predicted to be more likely to be pathogenic.
-# REVEL does not provide a descriptive prediction but for convenience, we display scores above 0.5, as 'likely disease causing' and display scores below 0.5 as 'likely benign'. REVEL_rankscore, REVEL_score
-
-# MetaLR uses logistic regression to integrate nine independent variant deleteriousness scores and allele frequency information to predict the deleteriousness of missense variants. Variants are classified as 'tolerated' or 'damaging'; a score between 0 and 1 is also provided and variants with higher scores are more likely to be deleterious.
-
-# MutationAssessor predicts the functional impact of amino-acid substitutions in proteins using the evolutionary conservation of the affected amino acid in protein homologs. We display the prediction, which is one of 'neutral', 'low', 'medium' and 'high', and the rank score, which is between 0 and 1 where variants with higher scores are more likely to be deleterious. 
-
-# PolyPhen and SIFT results are heavily dependent on sequence conservation estimates derived from protein sequence alignments and using different versions of the protein databases can result in substantial variance in the predictions and scores obtained.
-# Polyphen greater than 0.908	"Probably Damaging"
-# SIFT a score < 0.05 are called 'deleterious' and all others are called 'tolerated'.
-
-# GERP conservation scores as computed with the Genomic Evolutionary Rate Profiling GERP software on Multiple Sequence Alignments of whole-genomes. GERP identifies constrained loci in multiple sequence alignments by comparing the level of substitution observed to that expected if there was no functional constraint. Positive scores represent highly-conserved positions while negative scores represent highly-variable positions. the highest score of any base in a multi-base deletion is displayed. the mean of the scores of the two flanking bases is shown for an insertion
-
-# GERP.._NR
-# GERP.._RS_rankscore
-# GERP.._RS
-
-# data sources ----
-# system("cp ~/web/tools/genomic_tools/acmg_filter/data/acgm_criteria_table.txt ../data/")
-# system(
-# "cp ~/web/tools/genomic_tools/acmg_filter/data/acgm_criteria_table_caveats.txt ../data/"
-# )
-
 
 # clean up the VSAT result data for merging
 df_report_sample_vsat <- df_report |> dplyr::select(sample, everything())

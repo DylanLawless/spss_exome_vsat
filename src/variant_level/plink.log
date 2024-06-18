@@ -1,0 +1,15 @@
+PLINK v1.90b6.9 64-bit (4 Mar 2019)
+Options in effect:
+  --assoc
+  --bfile output1
+  --covar bcftools_gatk_norm_pca.eigenvec
+
+Hostname: jed
+Working directory: /work/backup/gr-fe/lawless/spss/exome/src/variant_level
+Start time: Fri Jun 30 15:32:09 2023
+
+Random number seed: 1688131929
+515374 MB RAM detected; reserving 257687 MB for main workspace.
+Error: Failed to open output1.bed.
+
+End time: Fri Jun 30 15:32:09 2023
