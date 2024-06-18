@@ -138,7 +138,7 @@ p_net <- ggraph(g, "stress") +
   theme_graph()
 
 
-filename <- paste0("../../data/untangleR/ppi_network_", paste(subset_MCL_ID, collapse="_"), ".pdf")
+filename <- paste0("../../images/untangleR/ppi_network_", paste(subset_MCL_ID, collapse="_"), ".pdf")
 ggsave(filename, 
        plot = p_net
        #, height = 10, width = 10
