@@ -63,13 +63,15 @@ grouped_df_max_report_position_pdb <- merge(
 # file from SIFTS
 url <- "ftp://ftp.ebi.ac.uk/pub/databases/msd/sifts/flatfiles/tsv/pdb_chain_uniprot.tsv.gz"
 output_file <- "pdb_chain_uniprot.tsv"
-output_dir <- "../../data/ACMGuru_gene_illustrate_protein_structure_singlecase/"
+data_dir <- "../../data/ACMGuru_gene_illustrate_protein_structure/"
+output_dir <- "../../images/ACMGuru_gene_illustrate_protein_structure_singlecase/"
+
 
 # Download the file
-# system2("curl", args = c("-v -# -o", paste0(output_dir, output_file, ".gz"), url))
+# system2("curl", args = c("-v -# -o", paste0(data_dir, output_file, ".gz"), url))
 
 # Read the SIFTS data
-sifts_data <- read.csv(paste0(output_dir, output_file), sep = "\t",  header = TRUE, comment.char = "#")
+sifts_data <- read.csv(paste0(data_dir, output_file), sep = "\t",  header = TRUE, comment.char = "#")
 
 names(sifts_data)
 
@@ -266,22 +268,6 @@ apply(grouped_df,
           }
         }
       })
-
-
-
-x
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 # Webshot ----
