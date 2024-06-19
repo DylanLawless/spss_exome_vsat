@@ -375,11 +375,10 @@ create_and_save_plots <- function(plot_list, file_suffix, filename) {
 			 # height = dims$height, width = dims$width, limitsize = FALSE)
 
 # Save the plots
-ggsave(paste("../../images/AMCGuru_", filename, sep = ""),plot = p.evidence_plots, 
+ggsave(paste("../../images/ACMGuru_gene_illustrate_post_ppi/AMCGuru_", filename, sep = ""),plot = p.evidence_plots, 
        height = dims$height, width = dims$width, limitsize = FALSE)
 
 }
-
 
 # Then can call create_plot() with either TRUE or FALSE for filtering
 plot_list_with_filter <- create_plot(TRUE)
@@ -392,20 +391,20 @@ create_and_save_plots(plot_list_without_filter, file_suffix, "evidence_plots_wit
 # individual plots ----
 # Create list of SYMBOLs with ACMG_total_score >= 6
 SYMBOL_list <- df_report %>%
-  filter(ACMG_total_score >= 6) %>%
+  # filter(ACMG_total_score >= 6) %>%
+  filter(ACMG_total_score >= 0) %>%
   distinct(SYMBOL) %>%
   pull(SYMBOL)
 
 # Iterate over SYMBOL_list and make single individual plot for each
 for (target_SYMBOL in SYMBOL_list) {
   # Create plots
-  plot_list_with_filter_target_SYMBOL <- create_plot(TRUE, target_SYMBOL)
-  plot_list_without_filter_target_SYMBOL <- create_plot(FALSE, target_SYMBOL)
+  # plot_list_with_filter_target_SYMBOL <- create_plot(TRUE, target_SYMBOL)
+  # plot_list_without_filter_target_SYMBOL <- create_plot(FALSE, target_SYMBOL)
+  plot_list_with_filter_target_SYMBOL <- create_plot(TRUE)
+  plot_list_without_filter_target_SYMBOL <- create_plot(FALSE)
   
   # Save plots
-
-  # create_and_save_plots(plot_list_without_filter_target_SYMBOL, file_suffix, paste("evidence_plots_without_filter_", target_SYMBOL, ".pdf"))
-  
   create_and_save_plots(plot_list_with_filter_target_SYMBOL, file_suffix, paste("evidence_plots_with_filter_", target_SYMBOL, ".pdf"))
   create_and_save_plots(plot_list_without_filter_target_SYMBOL, file_suffix, paste("evidence_plots_without_filter_", target_SYMBOL, ".pdf"))
   
