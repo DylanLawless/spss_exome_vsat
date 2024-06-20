@@ -1,22 +1,18 @@
 source("ACMGuru_singlecase_vcurrent.R")
-hold <- df_report
-# df_report <- hold
-# df_report <- df
-
-ACMG_threshold_to_plot <- 8
-
-# NB !!!! VERSION SETTINGS:
-# v4 10, 1e-3 (.001), HIGH-MODERATE
-# df_report <- df_report |> filter(gnomAD_AF <= 1e-3)
-
-rm(list=setdiff(ls(), c("ACMG_threshold_to_plot", "df_report", "df", "geneset_MCL_ID", "output_ID")))
-# file_suffix <- "gene_illustrate_"
-
-# df_report_position <- df_report_position |> filter(ACMG_score > 0 )
 
 library(dplyr)
 library(ggplot2)
 library(plotly)
+
+hold <- df_report
+ACMG_threshold_to_plot <- 8
+
+rm(list=setdiff(ls(), c("ACMG_threshold_to_plot", "df_report", "df", "geneset_MCL_ID", "file_suffix", "output_directory")))
+# file_suffix <- "gene_illustrate_"
+# file_suffix <- "ACMGuru_singlecase_"
+# output_directory <- "ACMGuru_singlecase/"
+output_directory <- "ACMGuru_gene_illustrate_singlecase/"
+geneset_MCL_ID <- "" # not required for single genes
 
 # Notes ----
 # Once the loop works. 
@@ -359,10 +355,9 @@ get_layout_dims <- function(n_plots) {
 #    A list with the number of columns (ncol), and the dimensions of height and width
 
 
-output_ID <- "singlecase_" # not requirede for single genes
-geneset_MCL_ID <- "" # not requirede for single genes
 
-create_and_save_plots <- function(plot_list, output_ID, filename) {
+
+create_and_save_plots <- function(plot_list, file_suffix, filename) {
 	n_plots <- length(plot_list)
 	dims <- get_layout_dims(n_plots)
 	ncol <- dims$ncol
@@ -377,12 +372,13 @@ create_and_save_plots <- function(plot_list, output_ID, filename) {
 			bottom = textGrob("Position" )
 		)
 
-	# Construct the filename with output_ID
-	filename <- paste(output_ID, filename, sep = "")
+	# Construct the filename with file_suffix
+	filename <- paste(file_suffix, filename, sep = "")
 
-	# Save the plots
-	ggsave(paste("../../data/singlecase/", filename, sep = ""),plot = p.evidence_plots,
-			 height = dims$height, width = dims$width, limitsize = FALSE)
+# Save the plots
+ggsave(paste("../../images/", output_directory, filename, sep = ""),plot = p.evidence_plots, 
+       height = dims$height, width = dims$width, limitsize = FALSE)
+
 }
 
 # Then can call create_plot() with either TRUE or FALSE
@@ -390,13 +386,13 @@ plot_list_with_filter <- create_plot(TRUE)
 plot_list_without_filter <- create_plot(FALSE)
 # 
 # # Save the plots
-create_and_save_plots(plot_list_with_filter, output_ID, "evidence_plots_with_filter.pdf")
-create_and_save_plots(plot_list_without_filter, output_ID, "evidence_plots_without_filter.pdf")
+create_and_save_plots(plot_list_with_filter, file_suffix, "evidence_plots_with_filter.pdf")
+create_and_save_plots(plot_list_without_filter, file_suffix, "evidence_plots_without_filter.pdf")
 
 
 
 
-# Save individual plots 
+# Save individual plots ----
 
 # create_plot <- function(filter_acmg_score) {
 create_plot <- function(filter_acmg_score, target_SYMBOL) {
@@ -539,7 +535,7 @@ create_plot <- function(filter_acmg_score, target_SYMBOL) {
 
   
   
-  create_and_save_plots <- function(plot_list, output_ID, filename) {
+  create_and_save_plots <- function(plot_list, file_suffix, filename) {
     n_plots <- length(plot_list)
     dims <- get_layout_dims(n_plots)
     ncol <- dims$ncol
@@ -554,15 +550,15 @@ create_plot <- function(filter_acmg_score, target_SYMBOL) {
         bottom = textGrob("Position" )
       )
     
-    # Construct the filename with output_ID
-    filename <- paste(output_ID, filename, sep = "")
+    # Construct the filename with file_suffix
+    filename <- paste(file_suffix, filename, sep = "")
     
     # Save the plots
     # ggsave(paste("../../data/ACMGuru_post_ppi/", filename, sep = ""),plot = p.evidence_plots, 
     # height = dims$height, width = dims$width, limitsize = FALSE)
     
     # Save the plots
-    ggsave(paste("../../data/singlecase/", filename, sep = ""),plot = p.evidence_plots, 
+    ggsave(paste("../../images/", output_directory, "", filename, sep = ""),plot = p.evidence_plots, 
            height = dims$height, width = dims$width, limitsize = FALSE)
   }
   
@@ -572,8 +568,8 @@ create_plot <- function(filter_acmg_score, target_SYMBOL) {
   plot_list_without_filter <- create_plot(FALSE, target_SYMBOL=NULL)
   
   # # Save the plots
-  create_and_save_plots(plot_list_with_filter, output_ID, "evidence_plots_with_filter.pdf")
-  create_and_save_plots(plot_list_without_filter, output_ID, "evidence_plots_without_filter.pdf")
+  create_and_save_plots(plot_list_with_filter, file_suffix, "evidence_plots_with_filter.pdf")
+  create_and_save_plots(plot_list_without_filter, file_suffix, "evidence_plots_without_filter.pdf")
   
   
   # Then can call create_plot() with either TRUE or FALSE for filtering
@@ -581,12 +577,12 @@ create_plot <- function(filter_acmg_score, target_SYMBOL) {
   # plot_list_without_filter <- create_plot(filter_acmg_score=FALSE, target_SYMBOL=NULL)
   
   # plot_list_with_filter <- create_plot(plot_list, target_SYMBOL, filename)
-  # plot_list_with_filter <- create_plot(plot_list, output_ID, filename=filename)
+  # plot_list_with_filter <- create_plot(plot_list, file_suffix, filename=filename)
   
   
   # Save the plots
-  # create_and_save_plots(plot_list_with_filter, output_ID, "evidence_plots_with_filter.pdf")
-  # create_and_save_plots(plot_list_without_filter, output_ID, "evidence_plots_without_filter.pdf")
+  # create_and_save_plots(plot_list_with_filter, file_suffix, "evidence_plots_with_filter.pdf")
+  # create_and_save_plots(plot_list_without_filter, file_suffix, "evidence_plots_without_filter.pdf")
   
   # individual plots ----
   # Create list of SYMBOLs with ACMG_total_score >= 6
@@ -603,19 +599,19 @@ create_plot <- function(filter_acmg_score, target_SYMBOL) {
     
     # Save plots
     
-    create_and_save_plots(plot_list_without_filter_target_SYMBOL, output_ID, paste0("evidence_plots_without_filter_", target_SYMBOL, ".pdf"))
+    create_and_save_plots(plot_list_without_filter_target_SYMBOL, file_suffix, paste0("evidence_plots_without_filter_", target_SYMBOL, ".pdf"))
   }
   
 # save file for ACMGuru_gene_uniprotr
-saveRDS(grouped_df_max, paste0("../../data/singlecase/acmguru_gene_illustrate_grouped_df_max", paste(geneset_MCL_ID, collapse="_"), ".Rds"))
+saveRDS(grouped_df_max, paste0("../../data/", output_directory, "acmguru_gene_illustrate_grouped_df_max", paste(geneset_MCL_ID, collapse="_"), ".Rds"))
 
-saveRDS(df_report, paste0("../../data/singlecase/acmguru_gene_illustrate_df_report", paste(geneset_MCL_ID, collapse="_"), ".Rds"))
+saveRDS(df_report, paste0("../../data/", output_directory, "acmguru_gene_illustrate_df_report", paste(geneset_MCL_ID, collapse="_"), ".Rds"))
 
-saveRDS(df_report_position, paste0("../../data/singlecase/acmguru_gene_illustrate_df_report_position", paste(geneset_MCL_ID, collapse="_"), ".Rds"))
+saveRDS(df_report_position, paste0("../../data/", output_directory, "acmguru_gene_illustrate_df_report_position", paste(geneset_MCL_ID, collapse="_"), ".Rds"))
 
 # Save the plots with specified height and width
-# create_and_save_plots(plot_list_with_filter, output_ID, "evidence_plots_with_filter.pdf", height = 28, width = 24)
-# create_and_save_plots(plot_list_without_filter, output_ID, "evidence_plots_without_filter.pdf", height = 36, width = 24)
+# create_and_save_plots(plot_list_with_filter, file_suffix, "evidence_plots_with_filter.pdf", height = 28, width = 24)
+# create_and_save_plots(plot_list_without_filter, file_suffix, "evidence_plots_without_filter.pdf", height = 36, width = 24)
 
 
 # END ----

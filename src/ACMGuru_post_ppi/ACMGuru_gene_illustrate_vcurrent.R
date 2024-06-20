@@ -12,6 +12,8 @@ rm(list=setdiff(ls(), c("df_report", "df", "geneset_MCL_ID", "file_suffix", "fil
 
 # df_report_position <- df_report_position |> filter(ACMG_score > 0 )
 
+output_directory <- "ACMGuru_gene_illustrate_post_ppi/"
+
 library(dplyr)
 library(ggplot2)
 library(plotly)
@@ -375,7 +377,7 @@ create_and_save_plots <- function(plot_list, file_suffix, filename) {
 			 # height = dims$height, width = dims$width, limitsize = FALSE)
 
 # Save the plots
-ggsave(paste("../../images/ACMGuru_gene_illustrate_post_ppi/AMCGuru_", filename, sep = ""),plot = p.evidence_plots, 
+ggsave(paste("../../images/", output_directory, filename, sep = ""),plot = p.evidence_plots, 
        height = dims$height, width = dims$width, limitsize = FALSE)
 
 }

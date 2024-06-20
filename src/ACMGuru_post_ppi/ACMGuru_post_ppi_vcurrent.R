@@ -1,4 +1,4 @@
-# AMCGuru ----
+# ACMGuru ----
 
 # https://varsome.com/about/resources/germline-implementation/
 # https://mart.ensembl.org/info/genome/variation/prediction/protein_function.html
@@ -26,8 +26,8 @@ geneset_MCL_ID[[1]]
 geneset_MCL_ID[[2]]
 
 # geneset_MCL_ID <- "586"
-file_suffix <- paste("post_ppi_MCL_ID_", paste(geneset_MCL_ID, collapse="_"), "_", sep = "")
-output_directory <- "ACMGuru_post_ppi"
+file_suffix <- paste("ACMGuru_post_ppi_MCL_ID_", paste(geneset_MCL_ID, collapse="_"), "_", sep = "")
+output_directory <- "ACMGuru_post_ppi/"
 
 f1 <- paste("../../data/post_ppi/bcftools_gatk_norm_maf01.recode_vep_conda_impact_MCL_", geneset_MCL_ID[[1]], ".vcf.gz", sep = "")
 
@@ -58,7 +58,7 @@ varsome <- read.table(file = "../../ref/varsome_calibrated_insilico_thresholds.t
 
 # for (f in 6) {
 # file_list <- c(
-# 	paste0("../../data/AMCGuru_post_ppi/bcftools_gatk_norm_maf01.recode_vep_conda_impact_iuis_gnomad_af1_chr_", 1:22, ".vcf.gz")
+# 	paste0("../../data/ACMGuru_post_ppi/bcftools_gatk_norm_maf01.recode_vep_conda_impact_iuis_gnomad_af1_chr_", 1:22, ".vcf.gz")
 # 	# ,"../data/annotation/bcftools_gatk_norm_maf01.recode_vep_conda_small_impact_gnomad_chr_X.vcf.gz", 
 # 	#  "../data/annotation/bcftools_gatk_norm_maf01.recode_vep_conda_small_impact_gnomad_chr_Y.vcf.gz"
 # )
@@ -181,7 +181,7 @@ ac_count_per_var <- df_summaries_grouped |>
 
 ac_count_per_var
 
-ggsave(paste("../../images/AMCGuru_post_ppi_", file_suffix, "ac_count_per_var.pdf", sep = "") ,plot = ac_count_per_var )
+ggsave(paste("../../images/", output_directory, file_suffix, "ac_count_per_var.pdf", sep = "") ,plot = ac_count_per_var )
 
 # df_desc <- describe(temp)
 # df_desc
@@ -227,7 +227,7 @@ p.acmg_score <- df |>
 	guides(fill=FALSE) +
 	scale_fill_scico(palette = 'bamako', direction = -1) # batlowK, acton, lajolla, lapaz, turku
 p.acmg_score 
-ggsave(paste("../../images/AMCGuru_post_ppi_", file_suffix, "acmg_score.pdf", sep = "") ,plot = p.acmg_score )
+ggsave(paste("../../images/", output_directory, file_suffix, "acmg_score.pdf", sep = "") ,plot = p.acmg_score )
 
 
 # panel ----
@@ -236,7 +236,7 @@ patch1 <- (
 	(p.criteria_gene_total) / ( p.variants_per_criteria | p.criteria_per_sample ) / ( p.pathogenicity_distributions | p.acmg_score)
 )  | (p.pathogenicity_distributions_engines_threshold) + plot_annotation(tag_levels = 'A')
 patch1
-ggsave(paste("../../images/AMCGuru_post_ppi_", file_suffix, "patch1.pdf", sep = "") ,plot = patch1 + plot_annotation(tag_levels = 'A'), width = 16, height = 10 )
+ggsave(paste("../../images/", output_directory, file_suffix, "patch1.pdf", sep = "") ,plot = patch1 + plot_annotation(tag_levels = 'A'), width = 16, height = 10 )
  
 # plot order
 # p.criteria_count_each_gene
@@ -283,12 +283,12 @@ var_per_gene <- df_summary_unq_vpg_nc |>
 
 var_per_gene
 
-ggsave(paste("../../images/AMCGuru_post_ppi_", file_suffix, "var_per_gene.pdf", sep = "") ,plot = var_per_gene + plot_annotation(tag_levels = 'A'), width = 9, height = 3 )
+ggsave(paste("../../images/", output_directory, file_suffix, "var_per_gene.pdf", sep = "") ,plot = var_per_gene + plot_annotation(tag_levels = 'A'), width = 9, height = 3 )
 
 # joint figure ----
 var_per_gene_ac_count_per_var <- (ac_count_per_var / var_per_gene)
 
-ggsave(paste("../../images/AMCGuru_post_ppi_", file_suffix, "var_per_gene_ac_count_per_var.pdf", sep = "") ,plot = var_per_gene_ac_count_per_var + plot_annotation(tag_levels = 'A'), width = 8, height = 5 )
+ggsave(paste("../../images/", output_directory, file_suffix, "var_per_gene_ac_count_per_var.pdf", sep = "") ,plot = var_per_gene_ac_count_per_var + plot_annotation(tag_levels = 'A'), width = 8, height = 5 )
 
 # Report ----
 df_report <- df
@@ -330,7 +330,7 @@ df_report_sample_vsat <- df_report_sample_vsat |> dplyr::select(sample.id)
 df_report_sample_vsat <- df_report_sample_vsat |> unique()
 df_report_sample_vsat$group <- "VSAT_contributer"
 
-# saveRDS(df_report_sample_vsat, file = "../../data/AMCGuru_post_ppi/df_report_sample_vsat.Rds")
+# saveRDS(df_report_sample_vsat, file = "../../data/ACMGuru_post_ppi/df_report_sample_vsat.Rds")
 
 saveRDS(df_report_sample_vsat, paste0("../../data/ACMGuru_post_ppi/df_report_sample_vsat_", paste(geneset_MCL_ID, collapse="_"), ".Rds"))
 
@@ -416,9 +416,9 @@ saveRDS(df_report_main_text,  paste0("../../data/ACMGuru_post_ppi/df_report_main
 #   group_by(across(-c(Inheritance))) %>%
 #   summarise(Inheritance = paste(Inheritance, collapse = ", "), .groups = 'drop')
 
-write.csv(df_report_main_text,  paste0("../../data/ACMGuru_post_ppi/AMCGuru_post_ppi_genetic_df_report_main_text_", paste(geneset_MCL_ID, collapse="_"), ".csv"))
+write.csv(df_report_main_text,  paste0("../../data/ACMGuru_post_ppi/ACMGuru_post_ppi_genetic_df_report_main_text_", paste(geneset_MCL_ID, collapse="_"), ".csv"))
 
-write.csv(df_report,  paste0("../../data/ACMGuru_post_ppi/AMCGuru_post_ppi_genetic_df_report_", paste(geneset_MCL_ID, collapse="_"), ".csv"))
+write.csv(df_report,  paste0("../../data/ACMGuru_post_ppi/ACMGuru_post_ppi_genetic_df_report_", paste(geneset_MCL_ID, collapse="_"), ".csv"))
 
 df_report |> 
   filter(ACMG_total_score > 1) |> 

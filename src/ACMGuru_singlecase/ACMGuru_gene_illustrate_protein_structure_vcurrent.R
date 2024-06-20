@@ -1,9 +1,9 @@
 source("ACMGuru_gene_illustrate_vcurrent.R")
 
 geneset_MCL_ID <- ""
-grouped_df_max <- readRDS(paste0("../../data/singlecase/acmguru_gene_illustrate_grouped_df_max", paste(geneset_MCL_ID, collapse="_"), ".Rds"))
+grouped_df_max <- readRDS(paste0("../../data/ACMGuru_singlecase/acmguru_gene_illustrate_grouped_df_max", paste(geneset_MCL_ID, collapse="_"), ".Rds"))
 
-df_report_position <- readRDS(paste0("../../data/singlecase/acmguru_gene_illustrate_df_report_position", paste(geneset_MCL_ID, collapse="_"), ".Rds"))
+df_report_position <- readRDS(paste0("../../data/ACMGuru_singlecase/acmguru_gene_illustrate_df_report_position", paste(geneset_MCL_ID, collapse="_"), ".Rds"))
 
 # Protein Structure ----
 # https://nvelden.github.io/NGLVieweR/articles/NGLVieweR.html

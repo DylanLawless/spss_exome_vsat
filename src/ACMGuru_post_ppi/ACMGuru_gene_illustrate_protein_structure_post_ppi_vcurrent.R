@@ -60,11 +60,11 @@ grouped_df_max_report_position_pdb <- merge(
 url <- "ftp://ftp.ebi.ac.uk/pub/databases/msd/sifts/flatfiles/tsv/pdb_chain_uniprot.tsv.gz"
 output_file <- "pdb_chain_uniprot.tsv"
 data_dir <- "../../data/ACMGuru_gene_illustrate_protein_structure/"
-output_dir <- "../../images/ACMGuru_gene_illustrate_protein_structure_post_ppi/"
+output_directory <- "../../images/ACMGuru_gene_illustrate_protein_structure_post_ppi/"
 
 
 # Download the file
-# system2("curl", args = c("-v -# -o", paste0(output_dir, output_file, ".gz"), url))
+# system2("curl", args = c("-v -# -o", paste0(output_directory, output_file, ".gz"), url))
 
 # Read the SIFTS data
 sifts_data <- read.csv(paste0(data_dir, output_file), sep = "\t",  header = TRUE, comment.char = "#")
@@ -180,7 +180,7 @@ grouped_df_max_report_position_pdb_longest <-
 #       1, function(row) {
 #   if (row['pdb'] != "") {
 #     plot <- plot_protein(row['pdb'], row['Protein_position'])
-#     saveWidget(plot, file=paste0(output_dir,row['SYMBOL'], "_",row['uniprotswissprot'], "_", row['pdb'], ".html"))
+#     saveWidget(plot, file=paste0(output_directory,row['SYMBOL'], "_",row['uniprotswissprot'], "_", row['pdb'], ".html"))
 #   }
 # })
 
@@ -241,7 +241,7 @@ apply(grouped_df,
           cat("PDB: ", row[['pdb']], "\n")  # print pdb id
           cat("Positions: ", unlist(row[['Protein_position']]), "\n")  # print positions
           plot <- plot_protein(row[['pdb']], unlist(row[['Protein_position']]))
-          file_html = paste0(output_dir,
+          file_html = paste0(output_directory,
                              row[['SYMBOL']], "_",
                              row[['uniprotswissprot']], "_", 
                              row[['pdb']], ".html")
@@ -251,7 +251,7 @@ apply(grouped_df,
           
           if (use_webshot == "Yes") {
             # Convert the HTML file to a PNG image
-            file_png = paste0(output_dir,
+            file_png = paste0(output_directory,
                               row[['SYMBOL']], "_",
                               row[['uniprotswissprot']], "_", 
                               row[['pdb']], ".png")
@@ -281,8 +281,8 @@ apply(grouped_df,
 #       1, function(row) {
 #         if (row['pdb'] != "") {
 #           plot <- plot_protein(row['pdb'], row['Protein_position'])
-#           file_html <- paste0(output_dir,row['SYMBOL'], "_",row['uniprotswissprot'], "_", row['pdb'], ".html")
-#           file_png <- paste0(output_dir,row['SYMBOL'], "_",row['uniprotswissprot'], "_", row['pdb'], ".png")
+#           file_html <- paste0(output_directory,row['SYMBOL'], "_",row['uniprotswissprot'], "_", row['pdb'], ".html")
+#           file_png <- paste0(output_directory,row['SYMBOL'], "_",row['uniprotswissprot'], "_", row['pdb'], ".png")
 #           saveWidget(plot, file = file_html)
 #           webshot2::webshot(url = file_html, file = file_png, vwidth = 1024, vheight = 768)
 #           # unlink(file_html)

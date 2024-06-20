@@ -343,7 +343,7 @@ p.pathogenicity_distributions_engines <- df_long |>
   guides(fill=FALSE) +
   scale_fill_scico(palette = 'bamako', direction = 1) # batlowK, acton, lajolla, lapaz, turku
 p.pathogenicity_distributions_engines
-ggsave(paste("../../images/AMCGuru_", file_suffix, "pathogenicity_distributions_engines.pdf", sep = "") ,plot = p.pathogenicity_distributions_engines, width = 9, height = 5)
+ggsave(paste("../../images/", output_directory ,file_suffix, "pathogenicity_distributions_engines.pdf", sep = "") ,plot = p.pathogenicity_distributions_engines, width = 9, height = 5)
 
 # Append a suffix to the pathogenicity column in varsome_thresholds
 varsome_thresholds$pathogenicity <- paste0(varsome_thresholds$pathogenicity, "_threshold")
@@ -459,10 +459,10 @@ p.pathogenicity_distributions_engines_threshold <-
     bottom = textGrob("in silico prediction score" )
   )
 p.pathogenicity_distributions_engines_threshold
-ggsave(paste("../../images/AMCGuru_", file_suffix, "pathogenicity_distributions_engines_threshold.pdf", sep = "") ,plot = p.pathogenicity_distributions_engines_threshold)
+ggsave(paste("../../images/", output_directory ,file_suffix, "pathogenicity_distributions_engines_threshold.pdf", sep = "") ,plot = p.pathogenicity_distributions_engines_threshold)
 
 
-ggsave(paste("../../images/AMCGuru_",  file_suffix, "pathogenicity_distributions_engines_threshold.pdf", sep = "") ,plot = p.pathogenicity_distributions_engines_threshold)
+ggsave(paste("../../images/", output_directory,  file_suffix, "pathogenicity_distributions_engines_threshold.pdf", sep = "") ,plot = p.pathogenicity_distributions_engines_threshold)
  
 # 
 # thresholds passed 
@@ -492,7 +492,7 @@ p.pathogenicity_distributions <- df |>
   guides(fill=FALSE) +
   scale_fill_scico(palette = 'bamako', direction = 1) # batlowK, acton, lajolla, lapaz, turku
 p.pathogenicity_distributions
-ggsave(paste("../../images/AMCGuru_", file_suffix, "pathogenicity_distributions.pdf", sep = "") ,plot = p.pathogenicity_distributions)
+ggsave(paste("../../images/", output_directory ,file_suffix, "pathogenicity_distributions.pdf", sep = "") ,plot = p.pathogenicity_distributions)
 
 
 # acmg tally  ----
@@ -537,7 +537,7 @@ p.criteria_count_each_gene <- df |>
   xlab("\nGene symbol") +
   ylab("ACMG criteria count (>1)")
 p.criteria_count_each_gene
-ggsave(paste("../../images/AMCGuru_", file_suffix, "criteria_count_each_gene.pdf", sep = "") ,plot = p.criteria_count_each_gene )
+ggsave(paste("../../images/", output_directory ,file_suffix, "criteria_count_each_gene.pdf", sep = "") ,plot = p.criteria_count_each_gene )
 
 # as table
 df |> 
@@ -559,7 +559,7 @@ p.criteria_gene_total <- df %>%
   guides(fill=FALSE) +
   scale_fill_scico(palette = 'acton', direction = 1) # batlowK, acton, lajolla, lapaz, turku
 p.criteria_gene_total 
-ggsave(paste("../../images/AMCGuru_", file_suffix, "criteria_gene_total.pdf", sep = "") ,plot = p.criteria_gene_total )
+ggsave(paste("../../images/", output_directory ,file_suffix, "criteria_gene_total.pdf", sep = "") ,plot = p.criteria_gene_total )
 
 # as table
 df |>
@@ -578,7 +578,7 @@ p.variants_per_criteria <- df |>
   guides(fill=FALSE) +
   scale_fill_scico(palette = 'acton', direction = 1) # batlowK, acton, lajolla, lapaz, turku
 p.variants_per_criteria
-ggsave(paste("../../images/AMCGuru_", file_suffix, "variants_per_criteria.pdf", sep = "") ,plot = p.variants_per_criteria , width = 9, height = 5)
+ggsave(paste("../../images/", output_directory ,file_suffix, "variants_per_criteria.pdf", sep = "") ,plot = p.variants_per_criteria , width = 9, height = 5)
 
 # Check we only have approx. 1 "casual" variant per sample
 p.criteria_per_sample <- df %>%
@@ -592,7 +592,7 @@ p.criteria_per_sample <- df %>%
   guides(fill=FALSE) +
   scale_fill_scico(palette = 'acton', direction = 1) # batlowK, acton, lajolla, lapaz, turku
 p.criteria_per_sample
-ggsave(paste("../../images/AMCGuru_", file_suffix, "criteria_per_sample.pdf", sep = "") ,plot = p.criteria_per_sample, width = 9, height = 5)
+ggsave(paste("../../images/", output_directory ,file_suffix, "criteria_per_sample.pdf", sep = "") ,plot = p.criteria_per_sample, width = 9, height = 5)
 
 # as table
 df |> 

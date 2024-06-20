@@ -13,8 +13,8 @@ library(cowplot) # For get_legend
 library(patchwork) # plots in panels
 library(knitr)
 
-file_suffix <- "singlecase_"
-output_directory <- "singlecase"
+file_suffix <- "ACMGuru_singlecase_"
+output_directory <- "ACMGuru_singlecase/"
 
 # acmg ----
 # For reference
@@ -44,7 +44,7 @@ chromosomes <- c(1:22, "X")
 
 # Generate file names using paste0 and the chromosome identifiers
 file_list <- paste0(
-  "../../data/", output_directory, "/bcftools_gatk_norm_maf01.recode_vep_conda_impact_iuis_gnomad_af1_chr_", 
+  "../../data/", output_directory, "bcftools_gatk_norm_maf01.recode_vep_conda_impact_iuis_gnomad_af1_chr_", 
   chromosomes, 
   ".vcf.gz"
 )
@@ -190,7 +190,7 @@ p.acmg_score <- df |>
 	guides(fill=FALSE) +
 	scale_fill_scico(palette = 'bamako', direction = 1) # batlowK, acton, lajolla, lapaz, turku
 p.acmg_score 
-ggsave(paste("../../images/ACMGuru_singlecase_", file_suffix, "acmg_score.pdf", sep = "") ,plot = p.acmg_score )
+ggsave(paste("../../images/", output_directory, file_suffix, "acmg_score.pdf", sep = "") ,plot = p.acmg_score )
 
 
 # panel ----
@@ -198,13 +198,13 @@ ggsave(paste("../../images/ACMGuru_singlecase_", file_suffix, "acmg_score.pdf", 
 patch1 <- (
 	(p.criteria_gene_total) / ( p.variants_per_criteria | p.criteria_per_sample ) / ( p.pathogenicity_distributions | p.acmg_score)
 ) + plot_annotation(tag_levels = 'A')
-ggsave(paste("../../images/ACMGuru_singlecase_", file_suffix, "patch1.pdf", sep = "") ,plot = patch1  + plot_annotation(tag_levels = 'A'), width = 8, height = 10 )
+ggsave(paste("../../images/", output_directory, file_suffix, "patch1.pdf", sep = "") ,plot = patch1  + plot_annotation(tag_levels = 'A'), width = 8, height = 10 )
 
 patch2 <- (
 	(p.criteria_gene_total) / ( p.variants_per_criteria | p.criteria_per_sample ) / ( p.pathogenicity_distributions | p.acmg_score)
 )  | (p.pathogenicity_distributions_engines_threshold) + plot_annotation(tag_levels = 'A')
 # patch2
-ggsave(paste("../../images/ACMGuru_singlecase_", file_suffix, "patch2.pdf", sep = "") ,plot = patch2 + plot_annotation(tag_levels = 'A'), width = 16, height = 10 )
+ggsave(paste("../../images/", output_directory, file_suffix, "patch2.pdf", sep = "") ,plot = patch2 + plot_annotation(tag_levels = 'A'), width = 16, height = 10 )
  
 # plot order
 # p.criteria_count_each_gene
@@ -284,13 +284,13 @@ colnames(df_report_main_text)[colnames(df_report_main_text) == 'Strong_pathogeni
 colnames(df_report_main_text)[colnames(df_report_main_text) == 'Moderate_pathogenic_GE'] <- 'Moder_patho'
 colnames(df_report_main_text)[colnames(df_report_main_text) == 'Supporting_pathogenic_GE'] <- 'Suppor_patho'
 
-saveRDS(df_report, file=paste0("../../data/", output_directory, "/df_report.Rds")
+saveRDS(df_report, file=paste0("../../data/", output_directory, "df_report.Rds")
 )
 
-saveRDS(df_report_main_text, file=paste0("../../data/", output_directory, "/df_report_main_text.Rds"))
+saveRDS(df_report_main_text, file=paste0("../../data/", output_directory, "df_report_main_text.Rds"))
 
 geneset_MCL_ID <- "" #ignore pathway level info
-write.csv(df_report_main_text,  paste0("../../data/", output_directory, "/ACMGuru_singlecase_genetic_df_report_main_text.csv"))
+write.csv(df_report_main_text,  paste0("../../data/", output_directory, "ACMGuru_singlecase_genetic_df_report_main_text.csv"))
 
-write.csv(df_report,  paste0("../../data/", output_directory, "/ACMGuru_singlecase_genetic_df_report.csv"))
+write.csv(df_report,  paste0("../../data/", output_directory, "ACMGuru_singlecase_genetic_df_report.csv"))
 
