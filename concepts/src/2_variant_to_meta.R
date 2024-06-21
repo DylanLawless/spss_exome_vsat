@@ -1,8 +1,9 @@
-# Set the working directory (adjust the path as necessary)
-setwd("~/web/ACMGuru/data")
 
-# Load the data from the CSV file
-df <- read.csv("example_variant.csv", stringsAsFactors = FALSE)
+# get example variant
+output_directory <- "../../data/"
+df_report_set <- readRDS(file=paste0(output_directory, "example_variant.Rds"))
+df_report_set |> names()
+df <- df_report_set
 
 # Define metadata (as described previously)
 metadata <- list(
@@ -53,13 +54,91 @@ format_with_metadata <- function(data_row, metadata) {
 names(metadata)
 names(df)
 
-df$chromosome <- df$seqnames
-df$genomic_position <- df$start
-df$refcodon
-df$alt
+# match concept names
+df$chromosome <- df$CHROM
+df$genomic_position <- df$POS
+df$reference_allele <- df$REF
+df$alternate_allele <- df$ALT
 
-# Apply the formatting function to each row
-df$output <- apply(df, 1, format_with_metadata, metadata)
 
-# Write to CSV with enriched data
-write.csv(df$output, "path_to_enriched_output_file.csv", row.names = FALSE, quote = FALSE)
+# simple structure table ----
+
+# Using your existing script to format each variant with its metadata
+df_formatted <- apply(df, 1, format_with_metadata, metadata)
+
+# Convert formatted data back into a dataframe
+df_table <- data.frame(row_id = 1:nrow(df), formatted_data = df_formatted, stringsAsFactors = FALSE)
+
+# Write to CSV
+write.csv(df_table, file = paste0(output_directory, "formatted_variant_data.csv"), row.names = FALSE)
+
+
+# Variant Metadata Report ----
+df_report_set <- readRDS(file=paste0(output_directory, "example_variant.Rds"))
+df_report_set |> names()
+
+# Add a metadata description to each field in the dataframe
+df_report_set <- df_report_set %>%
+  mutate(
+    CHROM = paste(CHROM, " | Chromosome | 1:1 | SNOMED CT: 91272006 |Chromosome (cell structure)|; LOINC:48000-4 |Chromosome|"),
+    POS = paste(POS, " | Genomic Position | 1:1 | GENO:0000902 |genomic feature location|"),
+    REF = paste(REF, " | Reference Allele | 1:1 | string"),
+    ALT = paste(ALT, " | Alternate Allele | 1:1 | string")
+  )
+
+kable(df_report_set)
+
+# readbale ---
+library(DT)
+
+datatable(
+  df_report_set,
+  options = list(
+    columnDefs = list(
+      list(targets = c(2, 3, 4, 5),  # Assuming these are the positions of CHROM, POS, REF, ALT
+           render = JS(
+             "function(data, type, row, meta){
+                return type === 'display' ? 
+                '<span title=\"' + data + '\">' + data.split(' | ')[0] + '</span>' : 
+                data;
+              }"
+           ))
+    )
+  )
+)
+
+
+# cols ---
+# Add metadata as separate columns for clarity
+df_report_set <- df_report_set %>%
+  mutate(
+    Chromosome_Metadata = "Chromosome | 1:1 | SNOMED CT: 91272006 |Chromosome (cell structure)|; LOINC:48000-4 |Chromosome|",
+    Position_Metadata = "Genomic Position | 1:1 | GENO:0000902 |genomic feature location|",
+    Ref_Metadata = "Reference Allele | 1:1 | string",
+    Alt_Metadata = "Alternate Allele | 1:1 | string"
+  )
+
+# Display with kable
+table <- kable(df_report_set, format = "html")  # Use format="html" to enable HTML rendering if needed
+
+
+library(knitr)
+library(kableExtra)
+
+# Assuming df_report_set is already created and available
+html_table <- kable(df_report_set, format = "html", escape = FALSE) #%>%
+  kable_styling(bootstrap_options = "striped", full_width = FALSE)
+
+# Save the HTML table to a file
+output_file <- "./table.html"
+writeLines(html_table, output_file)
+
+# Optionally, open the HTML file in the default system browser
+if (Sys.info()["sysname"] == "Windows") {
+  shell(paste("start", output_file))
+} else {
+  system(paste("open", output_file))
+}
+
+
+
