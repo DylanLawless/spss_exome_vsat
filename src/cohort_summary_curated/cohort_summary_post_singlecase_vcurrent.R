@@ -12,10 +12,13 @@ library(stringr)
 library(knitr)
 library(patchwork)
 
+setwd("../ACMGuru_singlecase/")
+source("ACMGuru_singlecase_vcurrent.R")
+setwd("../cohort_summary_curated")
 # load single case report
-df_report <- readRDS("../../data/singlecase/df_report.Rds")
-
-df_report_main_text <- readRDS("../../data/singlecase/df_report_main_text.Rds")
+# df_report <- readRDS("../../data/singlecase/df_report.Rds")
+# 
+# df_report_main_text <- readRDS("../../data/singlecase/df_report_main_text.Rds")
 
 # load clinical info
 samples <- read.csv("../../data/cohort_summary_curated/SAMPLE_LIST", header = F)
@@ -377,12 +380,12 @@ df_summaries |>
 # final table ----
 df_summaries <- df_summaries |> dplyr::select(-Strong_patho, -Moder_patho, -Suppor_patho)
 
-saveRDS(df_summaries, file="../../data/singlecase/ACMGuru_singlecase_df_report_cohort_data.Rds")
-write.csv(df_summaries,  paste0("../../data/singlecase/ACMGuru_singlecase_df_report_cohort_data.csv"))
+saveRDS(df_summaries, file="../../data/ACMGuru_singlecase/ACMGuru_singlecase_df_report_cohort_data.Rds")
+write.csv(df_summaries,  paste0("../../data/ACMGuru_singlecase/ACMGuru_singlecase_df_report_cohort_data.csv"))
 
 
 df_dedup <- df_summaries |> dplyr::select(sample.id, study.site: psofa.hem) |> unique()
-write.csv(df_dedup,  paste0("../../data/singlecase/ACMGuru_singlecase_df_report_dedup.csv"))
+write.csv(df_dedup,  paste0("../../data/ACMGuru_singlecase/ACMGuru_singlecase_df_report_dedup.csv"))
 
 # df_report_main_text |>
 #   filter(ACMG_total_score >= 6) |> 
@@ -550,7 +553,7 @@ full_report_with_intro <- paste(prepend_text, full_report, sep="")
 cat(full_report_with_intro)
 
 # Define the file path (adjust the path as needed for your directory structure)
-text_path <- "../../data/singlecase/ACMGuru_singlecase_df_report_clinical_text.txt"
+text_path <- "../../data/ACMGuru_singlecase/ACMGuru_singlecase_df_report_clinical_text.txt"
 
 # Save the report as a text file
 writeLines(full_report_with_intro, text_path)

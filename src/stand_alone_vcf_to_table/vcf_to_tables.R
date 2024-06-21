@@ -80,6 +80,6 @@ df_main <- merge(df_merge, df_csq, by = "rownames")
 # rm(df_csq)
 
 # Optional: Merge mandatory fields with the main dataframe
-df_main_meta <- merge(df_main, mandatory_fields, by.x = "rownames", by.y = "ROW_ID")
+# df_main_meta <- merge(df_main, mandatory_fields, by.x = "rownames", by.y = "ROW_ID")
 
-df_main <- df_main_meta
+# df_main <- df_main_meta
