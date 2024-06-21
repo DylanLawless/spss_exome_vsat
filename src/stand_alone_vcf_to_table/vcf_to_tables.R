@@ -22,15 +22,36 @@ cat("\nvcf import")
 tabixVcf <- Rsamtools::TabixFile(file = vcfFile)
 vcf <- VariantAnnotation::readVcf(file = tabixVcf)
 evcf <- VariantAnnotation::expand(x = vcf, row.names = TRUE)
-rm(vcfFile)
-rm(tabixVcf)
-rm(vcf)
 
 cat("\ncsq format")
-# get what I want ----
+
+# Extract mandatory fields ----
+# mandatory_fields <- data.frame(CHROM = vcf@rowRanges@seqnames,
+#                                POS = start(vcf@rowRanges),
+#                                ID = vcf@rowRanges@elementMetadata$ID,
+#                                REF = vcf@rowRanges@elementMetadata$REF,
+#                                ALT = vcf@rowRanges@elementMetadata$ALT)
+
+# Extract mandatory fields into a dataframe and include rownames as a column
+mandatory_fields <- data.frame(
+  ROW_ID = names(rowRanges(vcf)),  # Use rownames from rowRanges
+  CHROM = seqnames(rowRanges(vcf)),
+  POS = start(rowRanges(vcf)),
+  REF = as.character(ref(vcf)),  # Convert DNAStringSet to character
+  ALT = sapply(alt(vcf), function(alts) {
+    paste(sapply(alts, as.character), collapse = ",")
+  }),
+  stringsAsFactors = FALSE
+)
+
+# rm(vcfFile)
+# rm(tabixVcf)
+# rm(vcf)
+
+# get vcf# get what I want ----
 csq <- ensemblVEP::parseCSQToGRanges(x = evcf)
 df_csq <- as.data.frame(csq, row.names = NULL)
-rm(csq)
+# rm(csq)
 df_csq$rownames <-
 	ensemblVEP::parseCSQToGRanges(x = evcf) |> names()
 
@@ -55,7 +76,10 @@ df_merge <- df_merge |> dplyr::select(-CSQ) # now drop the original  list column
 
 cat("\nadd csq")
 df_main <- merge(df_merge, df_csq, by = "rownames")
-rm(df_merge)
-rm(df_csq)
+# rm(df_merge)
+# rm(df_csq)
 
+# Optional: Merge mandatory fields with the main dataframe
+df_main_meta <- merge(df_main, mandatory_fields, by.x = "rownames", by.y = "ROW_ID")
 
+df_main <- df_main_meta
