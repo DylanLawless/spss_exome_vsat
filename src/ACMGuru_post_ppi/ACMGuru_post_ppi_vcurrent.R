@@ -386,15 +386,15 @@ df_report_main_text <- df_report |>
   # filter(ACMG_score > 2 ) |>
   dplyr::select(sample.id, 
                 ACMG_total_score,
-                # ACMG_score, 
                 ACMG_count, 
                 ACMG_highest, 
-                SYMBOL, 
-                rownames,
-                chr,
-                HGVSp,
-                HGVSc,
-                Consequence,
+                rownames, 
+                CHROM, REF, ALT, 
+                POS, start, end, width, 
+                Gene, SYMBOL, HGNC_ID, 
+                HGVSp, HGVSc, Consequence,  
+                IMPACT, genotype,
+                Feature_type, Feature, BIOTYPE, VARIANT_CLASS, CANONICAL,
                 list_of_used_columns
   ) |> 
   arrange(SYMBOL,

@@ -150,7 +150,7 @@ df_report_grouped_grouped_df_max_GO_taxa_funct <- merge(df_report, grouped_df_ma
 
 df_report_discussion <-
   df_report_grouped_grouped_df_max_GO_taxa_funct |>
-  select(SYMBOL,
+  dplyr::select(SYMBOL,
          Protein.names,
          "Gene.Ontology..molecular.function.",
          "Function..CC."
