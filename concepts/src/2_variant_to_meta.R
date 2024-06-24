@@ -1,4 +1,119 @@
+library(dplyr)
+library(knitr)
+library(kableExtra)
+library(jsonlite)
 
+# Define the key columns for genetic variation concepts
+key_columns <- c("CHROM", "POS", "REF", "ALT")
+key_metadata <- paste(key_columns, "Metadata", sep = "_")
+
+# Enhance dataframe with visible metadata columns for easy reference
+df_enhanced <- df_report_set %>%
+  mutate(
+    CHROM_Metadata = "Type: Chromosome; Cardinality: 1:1; Value Set: SNOMED CT: 91272006, LOINC:48000-4",
+    POS_Metadata = "Type: Genomic Position; Cardinality: 1:1; Value Set: GENO:0000902",
+    REF_Metadata = "Type: Reference Allele; Cardinality: 1:1; Value Set: string",
+    ALT_Metadata = "Type: Alternate Allele; Cardinality: 1:1; Value Set: string"
+  )
+
+# Generate footnotes dynamically based on key metadata columns
+metadata_descriptions <- c(
+  "CHROM_Metadata" = "Metadata for CHROM column: Type: Chromosome, Cardinality: 1:1, Value Set: SNOMED CT: 91272006, LOINC:48000-4",
+  "POS_Metadata" = "Metadata for POS column: Type: Genomic Position, Cardinality: 1:1, Value Set: GENO:0000902",
+  "REF_Metadata" = "Metadata for REF column: Type: Reference Allele, Cardinality: 1:1, Value Set: string",
+  "ALT_Metadata" = "Metadata for ALT column: Type: Alternate Allele, Cardinality: 1:1, Value Set: string"
+)
+
+# Create the HTML table with footnotes for metadata
+html_table <- df_enhanced %>%
+  kable("html", escape = FALSE) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"), 
+    full_width = FALSE,
+    font_size = 14, 
+    position = "left"
+  ) %>%
+  column_spec(1, bold = TRUE) %>% 
+  row_spec(0, bold = TRUE, background = "#D3D3D3", color = "black") %>% 
+  # add_header_above(c(" " = 1, "Genetic Variation Info" = 4)) %>% 
+  scroll_box(width = "100%", height = "500px") 
+
+# Apply red color to key columns and their metadata
+for (col in key_columns) {
+  col_index <- which(names(df_enhanced) == col)
+  html_table <- html_table %>%
+    column_spec(col_index, color = "red", bold = TRUE)
+}
+
+# Adding footnotes for key metadata columns
+html_table <- html_table %>%
+  footnote(
+    general = metadata_descriptions[key_metadata],
+    general_title = "Key Metadata Descriptions",
+    symbol = "*"
+  )
+
+# Save the HTML table to a file
+output_file <- "enhanced_variant_table.html"
+writeLines(as.character(html_table), output_file)
+
+# Convert the enhanced dataframe to JSON format
+json_data <- toJSON(df_enhanced, pretty = TRUE)
+json_output_file <- "enhanced_variant_data.json"
+writeLines(json_data, json_output_file)
+
+# Optionally, open the HTML file in the default system browser
+if (Sys.info()["sysname"] == "Windows") {
+  shell(paste("start", output_file))
+} else {
+  system(paste("open", output_file))
+}
+
+# Print completion messages
+cat("The HTML table has been generated and saved successfully.\n")
+cat("The JSON data has been generated and saved successfully.\n")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# version 0 ----
 # get example variant
 output_directory <- "../../data/"
 df_report_set <- readRDS(file=paste0(output_directory, "example_variant.Rds"))

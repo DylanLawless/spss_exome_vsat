@@ -19,7 +19,7 @@ df_report_set <- df_report_main_text |>
                 Feature_type, Feature, BIOTYPE, VARIANT_CLASS, CANONICAL,
                     ) |> 
   filter(IMPACT == "HIGH") |>
-  head(1)
+  head(3)
 
 df_report_set |> names()
 
