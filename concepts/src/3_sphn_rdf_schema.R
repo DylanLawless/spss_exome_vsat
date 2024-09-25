@@ -260,3 +260,65 @@ names(df)
 # Print the filtered data to see the results
 print(filtered_data)
 
+
+# V4 ----
+
+library(rdflib)
+
+# Load your RDF data
+file_path <- "../data/sphn_rdf_schema.ttl"
+
+# Parse the Turtle file
+rdf_data <- rdf_parse(file_path, format = "turtle")
+
+sparql_query <- "
+PREFIX sphn: <https://biomedit.ch/rdf/sphn-ontology/sphn#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+
+SELECT ?subject ?predicate ?object
+WHERE {
+  {
+    ?subject ?predicate ?object .
+    FILTER(?subject = sphn:GeneticVariation || ?object = sphn:GeneticVariation)
+  }
+  UNION
+  {
+    ?subject ?predicate sphn:GeneticVariation .
+  }
+  UNION
+  {
+    sphn:GeneticVariation ?predicate ?object .
+  }
+}
+"
+
+# Execute the SPARQL query
+query_results <- rdf_query(rdf_data, sparql_query)
+
+# Check results and convert to dataframe
+if (length(query_results) > 0) {
+  results_df <- as.data.frame(query_results)
+  print(results_df)
+} else {
+  cat("No data returned. Check the RDF structure and SPARQL query.")
+}
+
+library(rdflib)
+
+library(rdflib)
+
+# Assuming `new_rdf` is your RDF graph
+if (exists("new_rdf") && rdf_is_empty(new_rdf) == FALSE) {
+  # Specify the output file path
+  output_path <- tempfile(fileext = ".ttl")
+  
+  # Serialize the RDF graph to a Turtle file
+  rdf_serialize(new_rdf, output_path, format = "turtle")
+  
+  # Print the path to the output file
+  print(paste("RDF data serialized to:", output_path))
+} else {
+  cat("The RDF graph is empty or not defined.")
+}
+
