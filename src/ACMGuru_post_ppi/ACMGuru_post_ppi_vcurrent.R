@@ -427,28 +427,58 @@ list_of_used_columns <- c(list_of_used_columns,
 
 df_report |> names()
 
+# df_report_main_text <- df_report |> 
+#   # filter(ACMG_score > 2 ) |>
+#   dplyr::select(sample.id, 
+#                 ACMG_total_score,
+#                 ACMG_count, 
+#                 ACMG_highest, 
+#                 rownames, 
+#                 CHROM, REF, ALT, 
+#                 POS, start, end, width, 
+#                 Gene, SYMBOL, HGNC_ID, 
+#                 HGVSp, HGVSc, Consequence,  
+#                 IMPACT, genotype,
+#                 Feature_type, Feature, BIOTYPE, VARIANT_CLASS, CANONICAL,
+#                 list_of_used_columns
+#   ) |> 
+#   arrange(SYMBOL,
+#           desc(ACMG_total_score),
+#           sample.id)
+# 
+# colnames(df_report_main_text)[colnames(df_report_main_text) == 'Strong_pathogenic_GE'] <- 'Strong_patho'
+# colnames(df_report_main_text)[colnames(df_report_main_text) == 'Moderate_pathogenic_GE'] <- 'Moder_patho'
+# colnames(df_report_main_text)[colnames(df_report_main_text) == 'Supporting_pathogenic_GE'] <- 'Suppor_patho'
+
 df_report_main_text <- df_report |> 
-  # filter(ACMG_score > 2 ) |>
+  # filter(ACMG_total_score > 5 ) |>
   dplyr::select(sample.id, 
-                ACMG_total_score,
-                ACMG_count, 
-                ACMG_highest, 
-                rownames, 
-                CHROM, REF, ALT, 
-                POS, start, end, width, 
-                Gene, SYMBOL, HGNC_ID, 
-                HGVSp, HGVSc, Consequence,  
-                IMPACT, genotype,
-                Feature_type, Feature, BIOTYPE, VARIANT_CLASS, CANONICAL,
-                list_of_used_columns
+                # ACMG_score, 
+                # ACMG_count, 
+                # ACMG_highest, 
+                SYMBOL, 
+                rownames,
+                # chr,
+                HGVSp,
+                HGVSc,
+                Consequence,
+                # IMPACT,                   
+                genotype,
+                # Inheritance,
+                gnomAD_AF,
+                # comp_het_flag  
+                # list_of_used_columns
+                ACMG_total_score
   ) |> 
-  arrange(SYMBOL,
+  arrange(SYMBOL, sample.id,
           desc(ACMG_total_score),
           sample.id)
 
-colnames(df_report_main_text)[colnames(df_report_main_text) == 'Strong_pathogenic_GE'] <- 'Strong_patho'
-colnames(df_report_main_text)[colnames(df_report_main_text) == 'Moderate_pathogenic_GE'] <- 'Moder_patho'
-colnames(df_report_main_text)[colnames(df_report_main_text) == 'Supporting_pathogenic_GE'] <- 'Suppor_patho'
+colnames(df_report_main_text)[colnames(df_report_main_text) == 'ACMG_total_score'] <- 'ACMG score'
+colnames(df_report_main_text)[colnames(df_report_main_text) == 'rownames'] <- 'Variant GRCh38'
+# colnames(df_report_main_text)[colnames(df_report_main_text) == 'Strong_pathogenic_GE'] <- 'Strong_patho'
+# colnames(df_report_main_text)[colnames(df_report_main_text) == 'Moderate_pathogenic_GE'] <- 'Moder_patho'
+# colnames(df_report_main_text)[colnames(df_report_main_text) == 'Supporting_pathogenic_GE'] <- 'Suppor_patho'
 
 # saveRDS(df_report, file="../../data/singlecase/df_report.Rds")
 
