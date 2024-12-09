@@ -41,6 +41,7 @@ varsome <- read.table(file = "../../ref/varsome_calibrated_insilico_thresholds.t
 # Define the chromosome identifiers
 chromosomes <- c(1:22, "X", "Y")
 chromosomes <- c(1:22, "X")
+# chromosomes <- c(21:22, "X")
 
 # Generate file names using paste0 and the chromosome identifiers
 file_list <- paste0(
@@ -98,6 +99,11 @@ df <- df_pathway
 df <- df |> filter(!is.na(SYMBOL)) # clean out unassigned
 hold <- df
 
+# TEST !!!! ----------------
+# TEST BREAK 
+# hold <- hold |> filter(CHROM == "chrX")
+# hold$CHROM |> unique()
+
 # saveRDS(df, "./df.Rds")
 # df <- readRDS("./df.Rds")
 
@@ -145,6 +151,38 @@ temp |>
   dplyr::select(HGVSc) |>
   unique() |>
   summarise(n())
+
+# Test for the Borghesi_paper variants present -----
+# Filter for any of the known variants:
+# WAS p.Glu131Lys, CYBB p.Gly364Arg, CFH p.Pro503Ala
+
+Borghesi_test <- df |> 
+  filter(
+    (SYMBOL == "WAS" & HGVSp == "ENSP00000365891.4:p.Glu131Lys") |
+      (SYMBOL == "CYBB" & HGVSp == "ENSP00000367851.4:p.Gly364Arg") |
+      (SYMBOL == "CFH")
+  ) |>
+  dplyr::select(sample, 
+                SYMBOL, 
+                rownames,
+                chr,
+                HGVSp,
+                HGVSc,
+                Consequence,
+                "IMPACT", 
+                "genotype", 
+                "Inheritance", 
+                "CLIN_SIG", 
+                "gnomAD_AF", 
+  ) |> 
+  arrange(SYMBOL,
+          sample)
+
+Borghesi_test |> dplyr::select(SYMBOL, sample, genotype, gnomAD_AF) |> unique()
+
+# There were three "known pathogenic" variants reported; WAS p.Glu131Lys, CYBB p.Gly364Arg, CFH p.Pro503Ala. CFH was filtered out during normal QC stages. The CYBB variant is present for 5 samples and 1 has genotype 2 (hemizygous male on X chromosome), however it is flagged as benign on CliVar and removed by MAF (0.003943) using newer gnomAD database. The WAS variant is present for 4 samples and 1 has genotype 2 (hemizygous male on X chromosome) however it is not identified as pathogenic by ACMG criteria (and nCliVar likely_benign) and and removed by MAF (0.002591) using newer gnomAD database. All other variants are basically do not have sufficient evidence of pathogenicity with updated criteria.
+
+rm(Borghesi_test)
 
 # df_desc <- describe(temp)
 # df_desc
@@ -262,27 +300,34 @@ list_of_used_columns <- c(list_of_used_columns,
 df_report |> names()
 
 df_report_main_text <- df_report |> 
-  filter(ACMG_score > 2 ) |>
+  filter(ACMG_total_score > 5 ) |>
   dplyr::select(sample.id, 
-                ACMG_total_score,
                 # ACMG_score, 
-                ACMG_count, 
-                ACMG_highest, 
+                # ACMG_count, 
+                # ACMG_highest, 
                 SYMBOL, 
                 rownames,
-                chr,
+                # chr,
                 HGVSp,
                 HGVSc,
                 Consequence,
-                list_of_used_columns
+                # IMPACT,                   
+                genotype,
+                # Inheritance,
+                gnomAD_AF,
+                # comp_het_flag  
+                # list_of_used_columns
+                ACMG_total_score
                 ) |> 
-  arrange(SYMBOL,
+  arrange(SYMBOL, sample.id,
           desc(ACMG_total_score),
           sample.id)
 
-colnames(df_report_main_text)[colnames(df_report_main_text) == 'Strong_pathogenic_GE'] <- 'Strong_patho'
-colnames(df_report_main_text)[colnames(df_report_main_text) == 'Moderate_pathogenic_GE'] <- 'Moder_patho'
-colnames(df_report_main_text)[colnames(df_report_main_text) == 'Supporting_pathogenic_GE'] <- 'Suppor_patho'
+colnames(df_report_main_text)[colnames(df_report_main_text) == 'ACMG_total_score'] <- 'ACMG score'
+colnames(df_report_main_text)[colnames(df_report_main_text) == 'rownames'] <- 'Variant GRCh38'
+# colnames(df_report_main_text)[colnames(df_report_main_text) == 'Strong_pathogenic_GE'] <- 'Strong_patho'
+# colnames(df_report_main_text)[colnames(df_report_main_text) == 'Moderate_pathogenic_GE'] <- 'Moder_patho'
+# colnames(df_report_main_text)[colnames(df_report_main_text) == 'Supporting_pathogenic_GE'] <- 'Suppor_patho'
 
 saveRDS(df_report, file=paste0("../../data/", output_directory, "df_report.Rds")
 )

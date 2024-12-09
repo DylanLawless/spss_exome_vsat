@@ -125,22 +125,51 @@ df$AC <- as.numeric(df$AC)
 df$AF.x <- as.numeric(df$AF.x)
 df_summaries <- df |> ungroup() |> dplyr::select(genotype, Inheritance, IMPACT, Consequence, AF.x, AC, gnomAD_AF, HGVSc) |> unique()
 
+# Number of total variants:
+# 857 heterozygous, 10 homozygous.
+
+df |> 
+  group_by(genotype) |>
+  summarise(variants = n()) 
+
+# Number of unique variants:
+# 440 heterozygous, 10 homozygous.
 df_summaries |> 
   group_by(genotype) |>
-  summarise(variants = n()) |>
-  kable("latex", booktabs = TRUE)
+  summarise(variants = n()) 
+# |> kable("latex", booktabs = TRUE)
 
+
+# Inheritance pattern of known IEI:
+# AR 7, NA 443
 df_summaries |> 
   group_by(Inheritance) |>
-  summarise(n())|>
-  kable("latex", booktabs = TRUE)
+  summarise(n())
+# |> kable("latex", booktabs = TRUE)
 
 df_summaries |> 
   ungroup() |>
   group_by(Consequence, IMPACT, genotype) |>
   summarise(unique_variants = n()) |>
-  arrange(IMPACT, unique_variants, genotype) |>
-  kable("latex", booktabs = TRUE)
+  arrange(IMPACT, unique_variants, genotype) 
+# |>  kable("latex", booktabs = TRUE)
+
+# Calculate the tally per group for "IMPACT":
+#   IMPACT   genotype unique_variants
+
+df_summaries %>%
+  ungroup() %>%
+  group_by(IMPACT, genotype) %>%
+  summarise(unique_variants = n(), .groups = 'drop') %>%
+  arrange(IMPACT, desc(unique_variants), genotype)
+
+# 42 high impact variants frameshift, stop gained or lost, start lost, splice acceptor or donor), 398 Moderate variants (missense, inframe deletion), and 10 homozygous moderate.
+
+df_summaries %>%
+  ungroup() %>%
+  group_by(IMPACT, Consequence) %>%
+  dplyr::select(Consequence, IMPACT) |>
+  unique()
 
 # df_summaries |> 
 #   group_by(Consequence, IMPACT, genotype) |>
@@ -148,17 +177,33 @@ df_summaries |>
 #   arrange(IMPACT, "unique variants", genotype) |>
 #   kable("latex", booktabs = TRUE)
 
+# In the enriched PPI we identified 443 unique variants, some of which are present in more than one patient for a total of 867 variant observations.
+# The number 
+#  1   249
+
+df_summaries |> 
+  group_by(AC) |>
+  summarise(count = n())
+# |> kable("latex", booktabs = TRUE)
+
+df_summaries |> 
+  group_by(AC, genotype) |>
+  summarise(count = n()) %>%
+  arrange(desc(genotype), AC, count)
+
+
 df_summaries |> 
   group_by(AC) |>
   summarise(count = n()) |>
-  kable("latex", booktabs = TRUE)
+  filter(AC > 1) |>
+  summarise(total  = sum(count))
 
 df_summaries |>
   ungroup() |>
   dplyr::select(HGVSc) |>
   unique() |>
-  summarise(n())|>
-  kable("latex", booktabs = TRUE)
+  summarise(n())
+# |>  kable("latex", booktabs = TRUE)
 
 # plot AC per var
 df_summaries$rownames <- rownames(df_summaries)
@@ -382,28 +427,58 @@ list_of_used_columns <- c(list_of_used_columns,
 
 df_report |> names()
 
+# df_report_main_text <- df_report |> 
+#   # filter(ACMG_score > 2 ) |>
+#   dplyr::select(sample.id, 
+#                 ACMG_total_score,
+#                 ACMG_count, 
+#                 ACMG_highest, 
+#                 rownames, 
+#                 CHROM, REF, ALT, 
+#                 POS, start, end, width, 
+#                 Gene, SYMBOL, HGNC_ID, 
+#                 HGVSp, HGVSc, Consequence,  
+#                 IMPACT, genotype,
+#                 Feature_type, Feature, BIOTYPE, VARIANT_CLASS, CANONICAL,
+#                 list_of_used_columns
+#   ) |> 
+#   arrange(SYMBOL,
+#           desc(ACMG_total_score),
+#           sample.id)
+# 
+# colnames(df_report_main_text)[colnames(df_report_main_text) == 'Strong_pathogenic_GE'] <- 'Strong_patho'
+# colnames(df_report_main_text)[colnames(df_report_main_text) == 'Moderate_pathogenic_GE'] <- 'Moder_patho'
+# colnames(df_report_main_text)[colnames(df_report_main_text) == 'Supporting_pathogenic_GE'] <- 'Suppor_patho'
+
 df_report_main_text <- df_report |> 
-  # filter(ACMG_score > 2 ) |>
+  # filter(ACMG_total_score > 5 ) |>
   dplyr::select(sample.id, 
-                ACMG_total_score,
-                ACMG_count, 
-                ACMG_highest, 
-                rownames, 
-                CHROM, REF, ALT, 
-                POS, start, end, width, 
-                Gene, SYMBOL, HGNC_ID, 
-                HGVSp, HGVSc, Consequence,  
-                IMPACT, genotype,
-                Feature_type, Feature, BIOTYPE, VARIANT_CLASS, CANONICAL,
-                list_of_used_columns
+                # ACMG_score, 
+                # ACMG_count, 
+                # ACMG_highest, 
+                SYMBOL, 
+                rownames,
+                # chr,
+                HGVSp,
+                HGVSc,
+                Consequence,
+                # IMPACT,                   
+                genotype,
+                # Inheritance,
+                gnomAD_AF,
+                # comp_het_flag  
+                # list_of_used_columns
+                ACMG_total_score
   ) |> 
-  arrange(SYMBOL,
+  arrange(SYMBOL, sample.id,
           desc(ACMG_total_score),
           sample.id)
 
-colnames(df_report_main_text)[colnames(df_report_main_text) == 'Strong_pathogenic_GE'] <- 'Strong_patho'
-colnames(df_report_main_text)[colnames(df_report_main_text) == 'Moderate_pathogenic_GE'] <- 'Moder_patho'
-colnames(df_report_main_text)[colnames(df_report_main_text) == 'Supporting_pathogenic_GE'] <- 'Suppor_patho'
+colnames(df_report_main_text)[colnames(df_report_main_text) == 'ACMG_total_score'] <- 'ACMG score'
+colnames(df_report_main_text)[colnames(df_report_main_text) == 'rownames'] <- 'Variant GRCh38'
+# colnames(df_report_main_text)[colnames(df_report_main_text) == 'Strong_pathogenic_GE'] <- 'Strong_patho'
+# colnames(df_report_main_text)[colnames(df_report_main_text) == 'Moderate_pathogenic_GE'] <- 'Moder_patho'
+# colnames(df_report_main_text)[colnames(df_report_main_text) == 'Supporting_pathogenic_GE'] <- 'Suppor_patho'
 
 # saveRDS(df_report, file="../../data/singlecase/df_report.Rds")
 
