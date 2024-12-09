@@ -557,3 +557,101 @@ text_path <- "../../data/ACMGuru_singlecase/ACMGuru_singlecase_df_report_clinica
 
 # Save the report as a text file
 writeLines(full_report_with_intro, text_path)
+
+
+# Fresh start - add clinical to main genetic report -----
+
+
+setwd("../ACMGuru_singlecase/")
+source("ACMGuru_singlecase_vcurrent.R")
+setwd("../cohort_summary_curated")
+
+# load clinical info
+samples <- read.csv("../../data/cohort_summary_curated/SAMPLE_LIST", header = F)
+
+samples$sample <- samples$V1
+samples <- samples |> dplyr::select(-V1)
+
+# Pheno ----
+# Create new column "cohort_pheno"
+samples$cohort_pheno <- samples$sample
+
+# Replace any value that starts with "setpt" with "0" in the "cohort_pheno" column
+samples$cohort_pheno[grep("^setpt", samples$sample)] <- "0"
+
+# Replace any value that does not start with "setpt" with "1" in the "cohort_pheno" column
+samples$cohort_pheno[!grepl("^setpt", samples$sample)] <- "1"
+
+# clean IDs
+samples <- separate(samples, sample, into = c("V1", "V2", "V3", "V4", "V5"))
+
+samples <- samples |>
+	mutate(V1 = ifelse(V1 == "raw", NA, V1))
+
+samples <- samples |>
+	unite(V1, V2, col = "sample.id", sep = "", na.rm = TRUE)
+
+samples <- samples |> filter(cohort_pheno == 1)
+
+# Clinical data ----
+df <- read.csv("../../data/cohort_summary_curated/sepsis_v2.csv")
+
+df <- df |> dplyr::select(
+	-exome_dataset_1,
+	-exome_dataset_1.1,  
+	-exome_dataset_2_path,
+	-exome_dataset_1_path,
+	-sqlpkey,
+	-personal.id)
+
+df$sample.id <- gsub("-", "", df$sample.id)
+df_v1 <- df
+
+# Clinical data - most updated?
+df <- read.csv("../../data/cohort_summary_curated/20200623_v3_clical_data_for_gwas/spss_gwas_episode.csv")
+df$sample.id <- gsub("-", "", df$sample.id)
+df_v2 <- df 
+
+# Merge all clinical data ----
+# This step meges two datasets and clean up columns which are duplicated as a result.
+# Merge the two clinical datasets to get best coverage.
+
+# Merge the data frames while keeping all rows from both
+df_v3 <- merge(df_v1, df_v2, by = "sample.id", all = TRUE)
+
+# List of columns that end with .x or .y
+columns_x <- grep("\\.x$", names(df_v3), value = TRUE)
+columns_y <- grep("\\.y$", names(df_v3), value = TRUE)
+
+# Remove .x or .y suffix and find common base names to identify matches
+base_names_x <- sub("\\.x$", "", columns_x)
+base_names_y <- sub("\\.y$", "", columns_y)
+
+# For each matched column name, choose which version (.x or .y) to keep
+for (base_name in intersect(base_names_x, base_names_y)) {
+	# Example logic: keep the .y version if not all are NA, otherwise keep .x
+	if (all(is.na(df_v3[[paste0(base_name, ".y")]]))) {
+		df_v3[[base_name]] <- df_v3[[paste0(base_name, ".x")]]
+	} else {
+		df_v3[[base_name]] <- df_v3[[paste0(base_name, ".y")]]
+	}
+	# Drop the now unnecessary .x and .y columns
+	df_v3[[paste0(base_name, ".x")]] <- NULL
+	df_v3[[paste0(base_name, ".y")]] <- NULL
+}
+
+# Remove the original .x and .y columns if they were not processed (not paired)
+remaining_x <- setdiff(columns_x, paste0(base_names_x[base_names_x %in% base_names_y], ".x"))
+remaining_y <- setdiff(columns_y, paste0(base_names_y[base_names_y %in% base_names_x], ".y"))
+df_v3[remaining_x] <- NULL
+df_v3[remaining_y] <- NULL
+
+# Merge clinical with main genetics tables ----
+# df <- merge(samples, df, by = "sample.id", all.x = TRUE)
+
+# missing_samples <- subset(df, is.na(study.site))
+# missing_sample_ids <- missing_samples$sample.id
+
+df_report_main_text_clinical <-
+	merge(df_report_main_text, df, by = "sample.id", all.x = TRUE)
+

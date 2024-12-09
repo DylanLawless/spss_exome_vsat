@@ -126,11 +126,23 @@ df <- df |>
 # df |> filter(ACMG_PVS1 == "PVS1")
 
 # PS1 ----
+# df$ACMG_PS1 <- NA
+# df <- df %>% dplyr::select(ACMG_PS1, everything())
+# df$ACMG_PS1 <- ifelse(df$CLIN_SIG == "pathogenic", "PS1", NA)
+
+# Updated
 # PS1 Same amino acid change as a previously established pathogenic variant regardless of nucleotide change. Note to keep splicing variant as PSV1 (these are covered by IPACT HIGH).
+# Keep any thing from CLIN_SIG or anything that has a ClinVar_CLNDN expect for NA/benign.
+# ? Allow CLIN_SIG %in% Conflicting_interpretations_of_pathogenicity for more modest screening
 df$ACMG_PS1 <- NA
 df <- df %>% dplyr::select(ACMG_PS1, everything())
-df$ACMG_PS1 <- ifelse(df$CLIN_SIG == "pathogenic", "PS1", NA)
+df$ACMG_PS1 <- ifelse(df$CLIN_SIG %in% c("pathogenic") & 
+												!is.na(df$ClinVar_CLNDN.y) & 
+												!df$ClinVar_CLNDN.y %in% c("not_provided", "not_specified", "not_specified&not_provided") |
+												grepl("not_specified&not_provided", df$ClinVar_CLNDN.y), "PS1", NA)
 # df |> filter(ACMG_PS1 == "PS1")
+
+
 
 # PS2 skip ----
 # PS2 De novo (both maternity and paternity confirmed) in a patient with the disease and no family history

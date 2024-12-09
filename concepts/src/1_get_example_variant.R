@@ -1,12 +1,18 @@
 #!/bin/bash
-# setwd("../../src/ACMGuru_post_ppi/")
-# source("ACMGuru_post_ppi_vcurrent.R")
-# setwd("../../concepts/src/")
+setwd("../../src/ACMGuru_post_ppi/")
+source("ACMGuru_post_ppi_vcurrent.R")
+setwd("../../concepts/src/")
 
+ # if (!requireNamespace("BiocManager", quietly = TRUE))
+ #  install.packages("BiocManager")
+ # BiocManager::install("ensemblVEP")
+ 
+library(dplyr)
 geneset_MCL_ID <- c(22, 586)
 df_report_main_text <- readRDS(file=paste0("../../data/ACMGuru_post_ppi/df_report_main_text_", paste(geneset_MCL_ID, collapse="_"), ".Rds"))
 
 names(df_report_main_text)
+df_report_main_text$CHROM <- df_report_main_text$chr
 
 # select features
 df_report_set <- df_report_main_text |> 
