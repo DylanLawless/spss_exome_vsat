@@ -21,10 +21,9 @@ library(patchwork)
 # make a loop for all genesets:
 # geneset_MCL_ID <- "22"
 
-geneset_MCL_ID <- c(22, 586, 836 )
+geneset_MCL_ID <- c(22, 586)
 geneset_MCL_ID[[1]]
 geneset_MCL_ID[[2]]
-geneset_MCL_ID[[3]]
 
 # geneset_MCL_ID <- "586"
 file_suffix <- paste("ACMGuru_post_ppi_MCL_ID_", paste(geneset_MCL_ID, collapse="_"), "_", sep = "")
@@ -34,9 +33,7 @@ f1 <- paste("../../data/post_ppi/bcftools_gatk_norm_maf01.recode_vep_conda_impac
 
 f2 <- paste("../../data/post_ppi/bcftools_gatk_norm_maf01.recode_vep_conda_impact_MCL_", geneset_MCL_ID[[2]], ".vcf.gz", sep = "")
 
-f2 <- paste("../../data/post_ppi/bcftools_gatk_norm_maf01.recode_vep_conda_impact_MCL_", geneset_MCL_ID[[3]], ".vcf.gz", sep = "")
-
-file_list <- c(f1, f2, f3)
+file_list <- c(f1, f2)
 
 # acmg ----
 # For reference
