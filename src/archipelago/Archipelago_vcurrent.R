@@ -43,7 +43,7 @@ df2$SNP <- df2$BP
 
 # Get the variant CHR, BP, MCL_ID ----
 vsat_log_v4_result_snp_mac <- read.table("../../data/post_ppi/vsat_log_v4_result_snp_mac.txt", fill = TRUE, header=TRUE)
-
+# vsat_log_v4_result_snp_mac_bak.txt
 
 # Separate SNP column
 vsat_log_v4_result_snp_mac <- vsat_log_v4_result_snp_mac |>
@@ -77,13 +77,13 @@ archipelago_plot <- function(df1, df2,
                              crit_val_single_variant = NULL,
                              point_size = 1,
                              point_size_large = 3,
-                             output_path_pdf = "archipelago_plot.pdf",
-                             output_path_png = "archipelago_plot.png",
-                             output_path_jpg = "archipelago_plot.jpg",
-                             output_raw_pdf = "vsat_raw_plot.pdf",
-                             output_raw_png = "vsat_raw_plot.png",
-                             output_raw_jpg = "vsat_raw_plot.jpg",
-                             output_patch_jpg = "archipelago_raw_patch.jpg"
+                             output_path_pdf = "../../data/archipelago/archipelago_plot.pdf",
+                             output_path_png = "../../data/archipelago/archipelago_plot.png",
+                             output_path_jpg = "../../data/archipelago/archipelago_plot.jpg",
+                             output_raw_pdf = "../../data/archipelago/vsat_raw_plot.pdf",
+                             output_raw_png = "../../data/archipelago/vsat_raw_plot.png",
+                             output_raw_jpg = "../../data/archipelago/vsat_raw_plot.jpg",
+                             output_patch_jpg = "../../data/archipelago/archipelago_raw_patch.jpg"
                              ) {
 
 library(ggplot2)

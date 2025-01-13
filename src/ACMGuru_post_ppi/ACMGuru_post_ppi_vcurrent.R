@@ -34,7 +34,7 @@ f1 <- paste("../../data/post_ppi/bcftools_gatk_norm_maf01.recode_vep_conda_impac
 
 f2 <- paste("../../data/post_ppi/bcftools_gatk_norm_maf01.recode_vep_conda_impact_MCL_", geneset_MCL_ID[[2]], ".vcf.gz", sep = "")
 
-f2 <- paste("../../data/post_ppi/bcftools_gatk_norm_maf01.recode_vep_conda_impact_MCL_", geneset_MCL_ID[[3]], ".vcf.gz", sep = "")
+f3 <- paste("../../data/post_ppi/bcftools_gatk_norm_maf01.recode_vep_conda_impact_MCL_", geneset_MCL_ID[[3]], ".vcf.gz", sep = "")
 
 file_list <- c(f1, f2, f3)
 
@@ -103,6 +103,9 @@ for (f in 1:length(file_list)) {
 	df <- df |> filter(cohort_pheno == 1)
 	df <- df |> filter(AC < 10)
 	
+	# Assign pathway ID to each pathway data frame
+	df$pathway_id <- geneset_MCL_ID[[f]]
+	  
 	df_pathway_list[[f]] <- df
 }
 
@@ -126,7 +129,7 @@ df <- merge(df, iuis, by="SYMBOL", all.x=TRUE) |> dplyr::select(SYMBOL, Inherita
 df$gnomAD_AF <- as.numeric(df$gnomAD_AF)
 df$AC <- as.numeric(df$AC)
 df$AF.x <- as.numeric(df$AF.x)
-df_summaries <- df |> ungroup() |> dplyr::select(genotype, Inheritance, IMPACT, Consequence, AF.x, AC, gnomAD_AF, HGVSc) |> unique()
+df_summaries <- df |> ungroup() |> dplyr::select(pathway_id, genotype, Inheritance, IMPACT, Consequence, AF.x, AC, gnomAD_AF, HGVSc) |> unique()
 
 # Number of total variants:
 # 857 heterozygous, 10 homozygous.
@@ -213,19 +216,20 @@ df_summaries$rownames <- rownames(df_summaries)
 
 # rank by AC
 df_summaries_grouped <- df_summaries |>
-  dplyr::select(HGVSc, AC, genotype) |>
+  dplyr::select(pathway_id, HGVSc, AC, genotype) |>
   arrange(AC) |>
   mutate(Rank = row_number())
 
-
 ac_count_per_var <- df_summaries_grouped |>
-  ggplot(aes(x = Rank, y = AC, fill=as.factor(genotype) )) +
+  ggplot(aes(x = Rank, y = AC, fill=as.factor(genotype))) +
   geom_bar(stat = "identity") +
   scale_fill_manual(values = c("grey", "#ee5d6c"), name = "Carrier\ngenotype", 
                     guide = guide_legend(reverse = TRUE)) +
   theme_minimal() +
   xlab("Unique variant\n(arranged by allele count)") +
-  ylab("Alelle count")
+  ylab("Allele count") +
+  facet_wrap(~ pathway_id, labeller = labeller(pathway_id = function(x) paste("Pathway ID", x)))
+
 
 ac_count_per_var
 
@@ -299,18 +303,18 @@ ggsave(paste("../../images/", output_directory, file_suffix, "patch1.pdf", sep =
 # For pathways, summarise set ----
 # p.var_per_gene <- 
 df_summary_vpg <- df |> 
-  dplyr::select(SYMBOL, rownames) |> unique() |>
-  group_by(SYMBOL) |> 
+  dplyr::select(pathway_id, SYMBOL, rownames) |> unique() |>
+  group_by(pathway_id, SYMBOL) |> 
   summarise(var_per_gene=n())
 
 
  df_summary_nc <- df |> 
-  dplyr::select(SYMBOL, rownames, sample) |> unique() |>
-  group_by(SYMBOL, rownames) |> 
+  dplyr::select(pathway_id, SYMBOL, rownames, sample) |> unique() |>
+  group_by(pathway_id, SYMBOL, rownames) |> 
   summarise(n_carriers=n())
 
 df_summary_unq <- df |> 
-	dplyr::select(ACMG_score, ACMG_highest, SYMBOL, rownames, HGVSc, HGVSp) |> unique() |>
+	dplyr::select(pathway_id, ACMG_score, ACMG_highest, SYMBOL, rownames, HGVSc, HGVSp) |> unique() |>
 	unique()
 
 temp <- merge(df_summary_vpg, df_summary_nc, by="SYMBOL")
@@ -318,7 +322,7 @@ df_summary_unq_vpg_nc <- merge(temp, df_summary_unq)
 rm(temp)
 
 var_per_gene <- df_summary_unq_vpg_nc |>
-  dplyr::select(SYMBOL, var_per_gene) |>
+  dplyr::select(pathway_id, SYMBOL, var_per_gene) |>
   unique() |>
   ggplot(aes(x=SYMBOL, y=var_per_gene)) +
   geom_point(aes(fill=var_per_gene), color="black", shape = 21) +
@@ -327,7 +331,9 @@ var_per_gene <- df_summary_unq_vpg_nc |>
   theme_minimal()  +
   scale_fill_scico(palette = 'lapaz', direction = 1,
                    name = "Variants\nper gene",) + # batlowK, acton, lajolla, lapaz, turku
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
+  facet_wrap(~ pathway_id, scales = "free_x", labeller = labeller(pathway_id = function(x) paste("Pathway ID", x)))
+
 
 var_per_gene
 
@@ -344,7 +350,7 @@ df_report <- df
 # df_report <- df |> filter(ACMG_score > 0)
 # see: iuis_iei_table.R for reactable
 
-df_report |> dplyr::select(ACMG_total_score, ACMG_count, ACMG_highest, SYMBOL, rownames, Protein_position, CDS_position) |> arrange(desc(ACMG_count))
+df_report |> dplyr::select(pathway_id, ACMG_total_score, ACMG_count, ACMG_highest, SYMBOL, rownames, Protein_position, CDS_position) |> arrange(desc(ACMG_count))
 
 # t <- df_report |> filter(gnomAD_AF < 1e-4) 
 
@@ -353,7 +359,8 @@ df$chr
 df$rownames
 df$MCL_ID <-  paste(geneset_MCL_ID, collapse="_")
 
-df_archi <- df |> dplyr::select(rownames, MCL_ID)
+df_archi <- df |> dplyr::select(pathway_id, rownames, MCL_ID)
+df$MCL_ID
 
 df_archi <- df_archi %>%
 	separate(rownames, into = c("CHR", "BP_variant"), sep = ":") |>
@@ -456,6 +463,7 @@ df_report |> names()
 df_report_main_text <- df_report |> 
   # filter(ACMG_total_score > 5 ) |>
   dplyr::select(sample.id, 
+                pathway_id,
                 # ACMG_score, 
                 # ACMG_count, 
                 # ACMG_highest, 

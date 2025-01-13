@@ -12,11 +12,17 @@ library(stringr)
 library(patchwork)
 
 
+# source("../ACMGuru_post_ppi/ACMGuru_post_ppi_vcurrent.R")
 
+# * * Report * *----
 # load VSAT report
-df_report_sample_vsat <- readRDS("../../data/ACMGuru_post_ppi/df_report_sample_vsat_22_586.Rds")
+# df_report_sample_vsat <- readRDS("../../data/ACMGuru_post_ppi/df_report_sample_vsat_22_586.Rds")
 
-geneset_MCL_ID <- c(22, 586)
+geneset_MCL_ID <- c(22, 586, 836 )
+
+df_report_sample_vsat <- readRDS(
+  paste0("../../data/ACMGuru_post_ppi/df_report_sample_vsat_", paste(geneset_MCL_ID, collapse="_"), ".Rds")
+  )
 
 file_suffix <- paste("post_ppi_MCL_ID_", paste(geneset_MCL_ID, collapse="_"), "_", sep = "")
 output_directory <- "ACMGuru_post_ppi"
@@ -35,6 +41,7 @@ samples <- samples |> dplyr::select(-V1)
 # Create new column "cohort_pheno"
 samples$cohort_pheno <- samples$sample
 
+# setpt denotes the cohort cohort ids
 # Replace any value that starts with "setpt" with "0" in the "cohort_pheno" column
 samples$cohort_pheno[grep("^setpt", samples$sample)] <- "0"
 
@@ -236,6 +243,7 @@ p_combined2 <-
     bottom = textGrob("Category")
   )
 p_combined2
+
 # Save combined plot to PDF
 ggsave("../../images/cohort_summary_curated/cohort_plots_post_ppi_categorical.pdf", plot = p_combined2, height = 10, width = 10)
 

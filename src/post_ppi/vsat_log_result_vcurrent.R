@@ -53,7 +53,7 @@ skat_log |>
   arrange(p_val)
 
 # drop qc faile sets
-qc <- read.table("./data/vsat_qc_id.txt")
+qc <- read.table("../post_ppi/vsat_qc_id.txt")
 skat_log <- skat_log %>% filter(!MCL_ID %in% qc$V1)
 
 # Plot the data with highlighted color
@@ -295,3 +295,4 @@ ggplot(results, aes(x = -log10(p.value), y = -log10(p.value))) +
 results |>
   ggplot(aes(x = direction_of_effect)) +
   geom_bar(stat = "count")
+

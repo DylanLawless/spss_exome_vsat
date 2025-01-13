@@ -1,5 +1,5 @@
 source("ACMGuru_post_ppi_vcurrent.R")
-# hold <- df_report
+hold <- df_report
 # df_report <- hold
 df_report <- df
 
@@ -110,9 +110,12 @@ df_report |>
 	summarise(v=n()) |> 
 	arrange(desc(v))
 
+
 # fill uniprot seqid ----
 # get first entry for Uniprot_acc ID (delim = &)
 df_report$seqid <- sapply(strsplit(as.character(df_report$Uniprot_acc), "&"), "[", 1)
+
+df_report <- df_report |> select(SYMBOL, Uniprot_acc, seqid, pathway_id, everything())
 
 df_report <- df_report %>%
 	group_by(SYMBOL) %>%
@@ -130,7 +133,6 @@ df_report_missing
 # fill uniprot SYMBOL ----
 # find largest uniprot entry per SYMBOL
 
-
 # 1. Identify SYMBOLs present in both df_uniprot_meta_tidy_short and df_report
 df_uniprot_meta_tidy_short <- df_uniprot_meta_tidy |> 
 	dplyr::select(SYMBOL, seqid)
@@ -138,11 +140,12 @@ df_uniprot_meta_tidy_short <- df_uniprot_meta_tidy |>
 common_SYMBOLs <- intersect(df_uniprot_meta_tidy_short$SYMBOL, df_report$SYMBOL)
 
 # Get seqids that correspond to the common_SYMBOLs
+# Note there can be many seqid to each symbol
 seqids_for_common_SYMBOLs <- df_uniprot_meta_tidy_short %>% 
 	filter(SYMBOL %in% common_SYMBOLs) %>%
 	pull(seqid)
 
-rm(common_SYMBOLs)
+# rm(common_SYMBOLs)
 
 # 2. Filter dt_uniprot for these seqid
 dt_uniprot_filtered <- dt_uniprot %>% filter(seqid %in% seqids_for_common_SYMBOLs)
@@ -159,8 +162,6 @@ grouped_df <- merged_df %>%
 	group_by(SYMBOL, seqid) %>%
 	summarise(n = n(), .groups = "drop")
 
-rm(merged_df)
-
 # 5. For each SYMBOL, keep only the rows corresponding to the seqid with the maximum count
 grouped_df_max <- grouped_df %>%
 	group_by(SYMBOL) %>%
@@ -169,6 +170,13 @@ grouped_df_max <- grouped_df %>%
 	dplyr::select(-n)
 
 rm(grouped_df)
+
+# add pathway (testing) -----
+# in uniprotR we get pathway data for genes, however we want to splot into pathway_ids first
+# names(grouped_df_max)
+# tmp <- df_report |> select(seqid, pathway_id) |> unique()
+# grouped_df_max_pathway <- merge(grouped_df_max, tmp)
+# end pathway (testing) -----
 
 class(grouped_df_max$SYMBOL)
 class(grouped_df_max$seqid)
@@ -179,7 +187,7 @@ df_report$seqid_old <- df_report$seqid
 df_report <- left_join(df_report, grouped_df_max, by = "SYMBOL", suffix = c("", ".y")) |>
 	mutate(seqid = seqid.y)|>
 	select(-seqid.y) |>
-	dplyr::select(SYMBOL, seqid, Protein_position, CDS_position, rownames, everything())
+	dplyr::select(pathway_id, SYMBOL, seqid, Protein_position, CDS_position, rownames, everything())
 
 # get first entry for Uniprot_acc ID (delim = &)
 # df_report$seqid <- sapply(strsplit(as.character(df_report$Uniprot_acc), "&"), "[", 1)
@@ -391,32 +399,33 @@ create_and_save_plots(plot_list_with_filter, file_suffix, "evidence_plots_with_f
 create_and_save_plots(plot_list_without_filter, file_suffix, "evidence_plots_without_filter.pdf")
 
 # individual plots ----
-# Create list of SYMBOLs with ACMG_total_score >= 6
-SYMBOL_list <- df_report %>%
-  # filter(ACMG_total_score >= 6) %>%
-  filter(ACMG_total_score >= 0) %>%
-  distinct(SYMBOL) %>%
-  pull(SYMBOL)
+# # Create list of SYMBOLs with ACMG_total_score >= 6
+# SYMBOL_list <- df_report %>%
+#   # filter(ACMG_total_score >= 6) %>%
+#   filter(ACMG_total_score >= 0) %>%
+#   distinct(SYMBOL) %>%
+#   pull(SYMBOL)
+# 
+# # Iterate over SYMBOL_list and make single individual plot for each
+# for (target_SYMBOL in SYMBOL_list) {
+#   # Create plots
+#   # plot_list_with_filter_target_SYMBOL <- create_plot(TRUE, target_SYMBOL)
+#   # plot_list_without_filter_target_SYMBOL <- create_plot(FALSE, target_SYMBOL)
+#   plot_list_with_filter_target_SYMBOL <- create_plot(TRUE)
+#   plot_list_without_filter_target_SYMBOL <- create_plot(FALSE)
+#   
+#   # Save plots
+#   create_and_save_plots(plot_list_with_filter_target_SYMBOL, file_suffix, paste("evidence_plots_with_filter_", target_SYMBOL, ".pdf"))
+#   create_and_save_plots(plot_list_without_filter_target_SYMBOL, file_suffix, paste("evidence_plots_without_filter_", target_SYMBOL, ".pdf"))
+#   
+# }
 
-# Iterate over SYMBOL_list and make single individual plot for each
-for (target_SYMBOL in SYMBOL_list) {
-  # Create plots
-  # plot_list_with_filter_target_SYMBOL <- create_plot(TRUE, target_SYMBOL)
-  # plot_list_without_filter_target_SYMBOL <- create_plot(FALSE, target_SYMBOL)
-  plot_list_with_filter_target_SYMBOL <- create_plot(TRUE)
-  plot_list_without_filter_target_SYMBOL <- create_plot(FALSE)
-  
-  # Save plots
-  create_and_save_plots(plot_list_with_filter_target_SYMBOL, file_suffix, paste("evidence_plots_with_filter_", target_SYMBOL, ".pdf"))
-  create_and_save_plots(plot_list_without_filter_target_SYMBOL, file_suffix, paste("evidence_plots_without_filter_", target_SYMBOL, ".pdf"))
-  
-}
-
-# save file for ACMGuru_gene_uniprotr
+# save file for ACMGuru_gene_uniprotr ----
 saveRDS(grouped_df_max, paste0("../../data/ACMGuru_post_ppi/acmguru_gene_illustrate_grouped_df_max", paste(geneset_MCL_ID, collapse="_"), ".Rds"))
 
-saveRDS(df_report, paste0("../../data/ACMGuru_post_ppi/acmguru_gene_illustrate_df_report", paste(geneset_MCL_ID, collapse="_"), ".Rds"))
+# saveRDS(grouped_df_max_pathway_id, paste0("../../data/ACMGuru_post_ppi/acmguru_gene_illustrate_grouped_df_max_pathway_id", paste(geneset_MCL_ID, collapse="_"), ".Rds"))
 
+saveRDS(df_report, paste0("../../data/ACMGuru_post_ppi/acmguru_gene_illustrate_df_report", paste(geneset_MCL_ID, collapse="_"), ".Rds"))
 
 
 # Save the plots with specified height and width

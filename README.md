@@ -57,15 +57,15 @@ Figure: Summary of the algorithm implemented by [ProteoMCLustR](https://github.c
     - ACMGuru_singlecase
         - ACMGuru_singlecase_vcurrent.R
         - requires: stand_alone_vcf_to_table
-        - ACMGuru_gene_uniprotR.R
         - ACMGuru_gene_illustrate_vcurrent.R
         - ACMGuru_gene_illustrate_protein_structure_vcurrent.R
+        - ACMGuru_gene_uniprotR.R
     - ACMGuru_post_ppi
         - ACMGuru_post_ppi_vcurrent.R
         - requires: stand_alone_vcf_to_table
-        - ACMGuru_gene_uniprotR.R
         - ACMGuru_gene_illustrate_vcurrent.R
         - ACMGuru_gene_illustrate_protein_structure_vcurrent.R
+        - ACMGuru_gene_uniprotR.R
     - archipelago
     - untangleR
 
