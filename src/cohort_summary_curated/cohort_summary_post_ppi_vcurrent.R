@@ -272,9 +272,9 @@ df_report_main_text |>
 df_report_main_text |>
   # df_summaries |> 
   ungroup() |>
-  group_by(ACMG_total_score, Consequence, IMPACT) |>
+  group_by("ACMG score", Consequence, IMPACT) |>
   summarise(unique_variants = n()) |>
-  arrange(desc(ACMG_total_score), IMPACT, unique_variants) |>
+  arrange(desc("ACMG score"), IMPACT, unique_variants) |>
   kable("latex", booktabs = TRUE)
 
 
@@ -315,9 +315,9 @@ unique_symbols <- df_report_main_text %>%
 unique_symbols
 
 nrow(df_report_main_text)
-nrow(df_report_main_text |> dplyr::select(rownames) |> unique())  
-nrow(df_report_main_text |> dplyr::select(rownames, sample.id) |> unique())  
-nrow(df_report_main_text |> dplyr::select(rownames, SYMBOL) |> unique())  
+# nrow(df_report_main_text |> dplyr::select(rownames) |> unique())  
+# nrow(df_report_main_text |> dplyr::select(rownames, sample.id) |> unique())  
+# nrow(df_report_main_text |> dplyr::select(rownames, SYMBOL) |> unique())  
 
 
 
@@ -330,7 +330,8 @@ df_cases_genetic <- merge(df_report_main_text, df, by = "sample.id", all = TRUE)
 
 ACMG_total_score_cutoff_pathogenic <- 1
 # df_summaries <- df |> filter(ACMG_score >= 4)
-df_summaries <- df_cases_genetic |> filter(ACMG_total_score >= ACMG_total_score_cutoff_pathogenic)
+# df_summaries <- df_cases_genetic |> filter(ACMG_total_score >= ACMG_total_score_cutoff_pathogenic)
+df_summaries <- df_cases_genetic |> filter("ACMG score" >= ACMG_total_score_cutoff_pathogenic)
 
 df_summaries |> 
   group_by(genotype) |>
@@ -350,14 +351,14 @@ df_summaries |>
   kable("latex", booktabs = TRUE)
 
 # final table ----
-df_summaries <- df_summaries |> dplyr::select(-Strong_patho, -Moder_patho, -Suppor_patho)
+# df_summaries <- df_summaries |> dplyr::select(-Strong_patho, -Moder_patho, -Suppor_patho)
 
-saveRDS(df_summaries, file="../../data/singlecase/ACMGuru_singlecase_df_report_cohort_data.Rds")
-write.csv(df_summaries,  paste0("../../data/singlecase/ACMGuru_singlecase_df_report_cohort_data.csv"))
+# saveRDS(df_summaries, file="../../data/singlecase/ACMGuru_singlecase_df_report_cohort_data.Rds")
+# write.csv(df_summaries,  paste0("../../data/singlecase/ACMGuru_singlecase_df_report_cohort_data.csv"))
 
 
 df_dedup <- df_summaries |> dplyr::select(sample.id, study.site: psofa.hem) |> unique()
-write.csv(df_dedup,  paste0("../../data/singlecase/ACMGuru_singlecase_df_report_dedup.csv"))
+# write.csv(df_dedup,  paste0("../../data/singlecase/ACMGuru_singlecase_df_report_dedup.csv"))
 
 # df_report_main_text |>
 #   filter(ACMG_total_score >= 6) |> 

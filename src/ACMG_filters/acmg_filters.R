@@ -1,4 +1,5 @@
 # acmg_filters ----
+print("We are adding PS3 now")
 
 # BA1 ----
 df_acmg |> filter(ACMG_label == "BA1") |> dplyr::select(Criteria)
@@ -136,10 +137,28 @@ df <- df |>
 # ? Allow CLIN_SIG %in% Conflicting_interpretations_of_pathogenicity for more modest screening
 df$ACMG_PS1 <- NA
 df <- df %>% dplyr::select(ACMG_PS1, everything())
-df$ACMG_PS1 <- ifelse(df$CLIN_SIG %in% c("pathogenic") & 
-												!is.na(df$ClinVar_CLNDN.y) & 
-												!df$ClinVar_CLNDN.y %in% c("not_provided", "not_specified", "not_specified&not_provided") |
-												grepl("not_specified&not_provided", df$ClinVar_CLNDN.y), "PS1", NA)
+
+# This code essentially labels entries as "PS1" where the clinical significance is marked as "pathogenic", the ClinVar_CLNDN.y is not missing, and it does not include undesirable terms unless explicitly containing "not_specified&not_provided".
+
+# df$ACMG_PS1 <- ifelse(df$CLIN_SIG %in% c("pathogenic") & 
+												# !is.na(df$ClinVar_CLNDN.y) & 
+												# !grepl("benign", df$CLIN_SIG) &
+												# !df$ClinVar_CLNDN.y %in% c("not_provided", "not_specified", "not_specified&not_provided") |
+												# grepl("not_specified&not_provided", df$ClinVar_CLNDN.y), "PS1", NA)
+
+df$ACMG_PS1 <- ifelse(
+  # df$CLIN_SIG %in% c("pathogenic") &
+    grepl("pathogenic", df$CLIN_SIG) #&
+    # !is.na(df$ClinVar_CLNDN.y) &
+    # !grepl("benign", df$CLIN_SIG) &
+    # !grepl("not_specified|not_provided", df$ClinVar_CLNDN.y),
+    , "PS1", NA)
+
+# print("!!! PS1 test !!\n\n")
+# print(df$CLIN_SIG |> unique())
+# print(df$ClinVar_CLNDN.y |> unique())
+# print(df |> dplyr::select(CLIN_SIG, ClinVar_CLNDN.y) |> unique())
+
 # df |> filter(ACMG_PS1 == "PS1")
 
 
@@ -148,11 +167,25 @@ df$ACMG_PS1 <- ifelse(df$CLIN_SIG %in% c("pathogenic") &
 # PS2 De novo (both maternity and paternity confirmed) in a patient with the disease and no family history
 # Skip due to no parental genetics.
 
-# PS3 skip ----
+print("We are adding PS3 now")
+# PS3 ----
 # PS3 Well-established in vitro or in vivo functional studies supportive of a damaging effect on the gene or gene product.
 # df$ACMG <- ifelse(uniprot == "pathogenic" |
 # 							pubmed == "pathogenic",
 # 						"PS3")
+# df$ACMG_PS3 <- ifelse(! is.na(df$Inheritance), "PS3", NA) 
+
+# Create a new column 'ACMG_PS3' and initialise with NA
+df$ACMG_PS3 <- NA
+
+# Set the label 'PS3' based on multiple criteria
+df$ACMG_PS3[(
+  (df$genotype >= 1 & df$Inheritance == "AD") |
+    (df$genotype >= 1 & df$Inheritance == "AD/AR") |
+    (df$genotype == 2 & df$Inheritance == "AR") |
+    (df$genotype == 2 & df$Inheritance == "XL") |
+    (df$genotype == 2 & df$Inheritance == "XLR")
+)] <- "PS3"
 
 # PS4 skip ----
 # The prevalence of the variant in affected individuals is significantly increased compared with the prevalence in controls

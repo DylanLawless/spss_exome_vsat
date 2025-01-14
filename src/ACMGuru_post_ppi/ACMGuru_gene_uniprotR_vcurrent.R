@@ -66,18 +66,21 @@ Accessions <- grouped_df_max$seqid
 
 # Download ----
 #Get Taxonomy Information 
-TaxaObj <- GetNamesTaxa(Accessions)
+print("TaxaObj <- GetNamesTaxa(Accessions)")
+# TaxaObj <- GetNamesTaxa(Accessions)
 
 # Get Gene ontolgy Information
-GeneOntologyObj <- GetProteinGOInfo(Accessions)
+print("GeneOntologyObj <- GetProteinGOInfo(Accessions)")
+# GeneOntologyObj <- GetProteinGOInfo(Accessions)
 
 # GetProteinFunction
-ProteinFunction <- GetProteinFunction(Accessions)
+print("ProteinFunction <- GetProteinFunction(Accessions)")
+# ProteinFunction <- GetProteinFunction(Accessions)
 
 # save ----
-saveRDS(TaxaObj, file=paste(output_dir, "ontology_taxa/TaxaObj.Rds", sep = ""))
-saveRDS(GeneOntologyObj, file=paste(output_dir, "ontology_taxa/GeneOntologyObj.Rds", sep = ""))
-saveRDS(ProteinFunction, file=paste(output_dir, "ontology_taxa/ProteinFunction.Rds", sep = ""))
+# saveRDS(TaxaObj, file=paste(output_dir, "ontology_taxa/TaxaObj.Rds", sep = ""))
+# saveRDS(GeneOntologyObj, file=paste(output_dir, "ontology_taxa/GeneOntologyObj.Rds", sep = ""))
+# saveRDS(ProteinFunction, file=paste(output_dir, "ontology_taxa/ProteinFunction.Rds", sep = ""))
 
 # read local copy ----
 TaxaObj <- readRDS(file=paste(output_dir, "ontology_taxa/TaxaObj.Rds", sep = ""))
@@ -90,7 +93,7 @@ ProteinFunction$seqid <- rownames(ProteinFunction)
 
 # add pathway id ----
 
-tmp <- df_report |> select(SYMBOL, pathway_id, seqid) |> unique()
+tmp <- df_report |> dplyr::select(SYMBOL, pathway_id, seqid) |> unique()
 TaxaObj <- merge(TaxaObj, tmp, all.x = T)
 GeneOntologyObj <- merge(GeneOntologyObj, tmp, all.x = T)
 ProteinFunction <- merge(ProteinFunction, tmp, all.x = T)
@@ -186,3 +189,4 @@ readr::write_tsv(df_report_discussion, file=(paste0("../../data/ACMGuru_post_ppi
 
 write.csv(df_report_discussion, file=(paste0("../../data/ACMGuru_post_ppi/df_report_discussion_", paste(geneset_MCL_ID, collapse="_"), ".csv")),
           row.names = FALSE)
+

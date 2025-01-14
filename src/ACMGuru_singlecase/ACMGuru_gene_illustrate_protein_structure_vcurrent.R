@@ -23,7 +23,8 @@ library(biomaRt)
 listMarts()
 
 # Choose the Ensembl Mart
-ensembl = useMart("ensembl")
+ensembl = useMart(biomart = "ensembl")
+ensembl <- useEnsembl(biomart = "ensembl", mirror = "useast")
 
 # List available datasets
 listDatasets(ensembl)

@@ -16,6 +16,18 @@ library(knitr)
 file_suffix <- "ACMGuru_singlecase_"
 output_directory <- "ACMGuru_singlecase/"
 
+# setting population filter threshold ----
+# The same style is applied in stand_alone_vcf_to_table but the threshold is there set to 1 for generality and could instead be passed from this runner script. You can see from the following tests what effect this step has. This is a sanity test to see if our scores are as expected or if gnomad freq is basically the same proxy, which it is not at the final candidate stage. 
+gnomad_freq_thresh_local <- ""
+# no threshold = 66 candidate variants
+# gnomad_rare_thresh <- 1400 # 46 OK
+# gnomad_rare_thresh <- 140 # 19 candidate variants ?
+# gnomad_rare_thresh <- 1.4 # 43 candidate variants OK
+# gnomad_total <- 140000 # approx number in gnomad
+# gnomad_rare_thresh <- 140 # approx carriers
+# gnomad_freq_thresh_local <- gnomad_rare_thresh/gnomad_total
+# gnomad_freq_thresh_local
+
 # acmg ----
 # For reference
 df_acmg <- fread("../../ref/acmg_criteria_table.txt", sep = "\t", header = TRUE, fill=TRUE)
@@ -39,7 +51,6 @@ varsome <- read.table(file = "../../ref/varsome_calibrated_insilico_thresholds.t
 
 # qv ----
 # Define the chromosome identifiers
-chromosomes <- c(1:22, "X", "Y")
 chromosomes <- c(1:22, "X")
 # chromosomes <- c(21:22, "X")
 
@@ -55,7 +66,6 @@ df_pathway_list <- list()
 for (f in 1:length(file_list)) {
 	cat("Now analysing", f, "\n")
 	source("../stand_alone_vcf_to_table/stand_alone_vcf_to_table.R")
-
 
 	# qv clean ----
 	df$cohort_pheno <- df$sample
@@ -94,12 +104,27 @@ for (f in 1:length(file_list)) {
 
 cat("\nFinished vcf_to_table")
 
+# dfx <- df_pathway_list[[23]] # check chr X
+
 df_pathway <- do.call(rbind, df_pathway_list)
 df <- df_pathway
 df <- df |> filter(!is.na(SYMBOL)) # clean out unassigned
 hold <- df
+df <- hold
+# filter gnomad
 
-# TEST !!!! ----------------
+# print(paste("Filtering with gnomad_freq_thresh_local", gnomad_freq_thresh_local))
+# df <- df |> filter(gnomAD_AF < gnomad_freq_thresh_local)
+
+
+# print("!!! PS1 test !!\n\n")
+# print(hold$CLIN_SIG |> unique())
+# print(hold$ClinVar_CLNDN.y |> unique())
+# print(hold |> dplyr::select(CLIN_SIG, ClinVar_CLNDN.y) |> unique())
+# hold_x <- hold |> dplyr::select(CLIN_SIG, ClinVar_CLNDN.y) |> unique()
+# hold_x <- hold |> filter(genotype == 2)
+
+
 # TEST BREAK 
 # hold <- hold |> filter(CHROM == "chrX")
 # hold$CHROM |> unique()
@@ -108,9 +133,9 @@ hold <- df
 # df <- readRDS("./df.Rds")
 
 # tidy rm trash
-rm(list=setdiff(ls(), c("df",  "df_acmg", "df_acmg_caveat", "hold", "iuis", "varsome", "output_directory", "file_suffix")))
+rm(list=setdiff(ls(), c("gnomad_freq_thresh_local", "df",  "df_acmg", "df_acmg_caveat", "hold", "iuis", "varsome", "output_directory", "file_suffix")))
 gc()
-df <- hold
+
 
 # iuis merge ----
 df <- merge(df, iuis, by="SYMBOL", all.x=TRUE) |> dplyr::select(SYMBOL, Inheritance, everything())
@@ -213,13 +238,20 @@ df <- df %>%
   mutate(comp_het_flag = ifelse(chr == "X" & genotype == 2, 1, comp_het_flag)) %>%
   dplyr::select(comp_het_flag, everything())
 
-  # source acmg filters ----
+
+# print(n = 30, df |> filter(SYMBOL == "WAS") |> dplyr::select(IMPACT, SYMBOL, genotype))
+
+# source acmg filters ----
+print("We are adding PS3 now")
+
 source("../ACMG_filters/acmg_filters.R")
 
 # plot scores ----
 # 
 p.acmg_score <- df |> 
-	ggplot(aes(x = as.character(ACMG_total_score), fill= as.numeric(ACMG_total_score) )) +
+  arrange(ACMG_total_score) |>
+  # ggplot(aes(x = as.character(ACMG_total_score), fill= as.numeric(ACMG_total_score) )) +
+  ggplot(aes(x = as.factor(ACMG_total_score), fill= as.numeric(ACMG_total_score) )) +
 	geom_histogram(stat='count', bins = length(acmg_scores), color="black") +
 	theme_minimal() +
 	xlab("ACMG score") +
@@ -228,6 +260,7 @@ p.acmg_score <- df |>
 	guides(fill=FALSE) +
 	scale_fill_scico(palette = 'bamako', direction = 1) # batlowK, acton, lajolla, lapaz, turku
 p.acmg_score 
+
 ggsave(paste("../../images/", output_directory, file_suffix, "acmg_score.pdf", sep = "") ,plot = p.acmg_score )
 
 
@@ -297,10 +330,12 @@ list_of_used_columns <- c(list_of_used_columns,
                           #"MutationAssessor_pred", "SIFT_label", "PolyPhen_label"
                           )
 
-df_report |> names()
+# df_report |> names()
 
+print("Updating `ACMG_total_score > 9` to `ACMG_total_score > 9`")
 df_report_main_text <- df_report |> 
   filter(ACMG_total_score > 5 ) |>
+  filter(ACMG_total_score > 9 ) |>
   dplyr::select(sample.id, 
                 # ACMG_score, 
                 # ACMG_count, 
@@ -313,7 +348,7 @@ df_report_main_text <- df_report |>
                 Consequence,
                 # IMPACT,                   
                 genotype,
-                # Inheritance,
+                Inheritance,
                 gnomAD_AF,
                 # comp_het_flag  
                 # list_of_used_columns
@@ -551,11 +586,29 @@ df_v3[remaining_y] <- NULL
 # missing_samples <- subset(df, is.na(study.site))
 # missing_sample_ids <- missing_samples$sample.id
 
+
 df_report_main_text_clinical <-
 	merge(df_report_main_text, df, by = "sample.id", all.x = TRUE)
+
+rownames(df_report_main_text_clinical) <- NULL
+
+df_report_main_text_clinical <- df_report_main_text_clinical |>
+  ungroup() |>
+  arrange(SYMBOL,
+          sample.id)
 
 saveRDS(df_report_main_text_clinical, file=paste0("../../data/", output_directory, "df_report_main_text_clinical.Rds"))
 
 geneset_MCL_ID <- "" #ignore pathway level info
 write.csv(df_report_main_text_clinical,  paste0("../../data/", output_directory, "ACMGuru_singlecase_genetic_df_report_main_text_clinical.csv"))
+
+
+
+
+df_report_main_text_clinical_short <- df_report_main_text_clinical |>
+  dplyr::select(sample.id:'ACMG score',sex,age.at.bc,pathogen.grp, focus.grp, picu)
+
+write.csv(df_report_main_text_clinical_short,  paste0("../../data/", output_directory, "ACMGuru_singlecase_genetic_df_report_main_text_clinical_short.csv"))
+
+
 

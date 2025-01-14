@@ -20,6 +20,7 @@ listMarts()
 
 # Choose the Ensembl Mart
 ensembl = useMart("ensembl")
+ensembl <- useEnsembl(biomart = "ensembl", mirror = "asia")
 
 # List available datasets
 listDatasets(ensembl)
