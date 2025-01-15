@@ -19,6 +19,14 @@ Each tool and method used in our study is documented in detail to aid reproducib
 
 Contributions and insights from readers are highly encouraged, as we aim to foster a collaborative environment to enhance our understanding of sepsis at the genetic level.
 
+## Publication files
+
+From `sync_publication.sh`
+All output files used for publication are listed in the two files `sync_list_figure` and `sync_list_table`.
+This study uses git to track code but the data dir is in gitignore due to privacy.
+This study contains many unused outputs such as figures (>1500) and numerous intermediate tables.
+Therefore, we only need to sync the selected content for a neat publication directory.
+
 ## Analysis overview
 
 <div style="display: flex; justify-content: space-between;">

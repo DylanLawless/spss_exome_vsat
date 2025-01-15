@@ -19,7 +19,7 @@ library(biomaRt)
 listMarts()
 
 # Choose the Ensembl Mart
-ensembl = useMart("ensembl")
+# ensembl = useMart("ensembl")
 ensembl <- useEnsembl(biomart = "ensembl", mirror = "asia")
 
 # List available datasets
@@ -236,6 +236,37 @@ use_webshot <- "Yes"
 # use_webshot <- "No"
 
 # Apply the function to data and save HTML
+# apply(grouped_df,
+#       1, function(row) {
+#         if (row[['pdb']] != "") {
+#           cat("PDB: ", row[['pdb']], "\n")  # print pdb id
+#           cat("Positions: ", unlist(row[['Protein_position']]), "\n")  # print positions
+#           plot <- plot_protein(row[['pdb']], unlist(row[['Protein_position']]))
+#           file_html = paste0(output_directory,
+#                              row[['SYMBOL']], "_",
+#                              row[['uniprotswissprot']], "_", 
+#                              row[['pdb']], ".html")
+#           htmlwidgets::saveWidget(plot, 
+#                                   file=file_html,
+#                                   selfcontained = FALSE)
+#           
+#           if (use_webshot == "Yes") {
+#             # Convert the HTML file to a PNG image
+#             file_png = paste0(output_directory,
+#                               row[['SYMBOL']], "_",
+#                               row[['uniprotswissprot']], "_", 
+#                               row[['pdb']], ".png")
+#             webshot2::webshot(url = file_html, 
+#                               file = file_png, 
+#                               vwidth = 1024, 
+#                               vheight = 768,
+#                               expand = -50)  # Negative value to trim borders
+#           }
+#         }
+#       })
+
+# Apply the function to data and save HTML
+print("We set a 5 second delay to png snapshot to allow it to render. This will significantly slow the process")
 apply(grouped_df,
       1, function(row) {
         if (row[['pdb']] != "") {
@@ -260,10 +291,12 @@ apply(grouped_df,
                               file = file_png, 
                               vwidth = 1024, 
                               vheight = 768,
+                              delay = 5,  # Wait 5 seconds before taking the screenshot
                               expand = -50)  # Negative value to trim borders
           }
         }
       })
+
 
 # Webshot ----
 # install.packages("webshot2")

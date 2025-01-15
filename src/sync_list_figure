@@ -1,0 +1,111 @@
+# Figures ////////
+#
+# ACMGuru_post_ppi
+ACMGuru_post_ppi/ACMGuru_post_ppi_MCL_ID_22_586_836_acmg_score.pdf
+ACMGuru_post_ppi/ACMGuru_post_ppi_MCL_ID_22_586_836_patch1.pdf
+ACMGuru_post_ppi/ACMGuru_post_ppi_MCL_ID_22_586_836_var_per_gene_ac_count_per_var.pdf
+ACMGuru_post_ppi/AMCGuru_post_ppi_MCL_ID_22_586_evidence_plots_without_filter.pdf
+ACMGuru_post_ppi/engines_1.pdf
+ACMGuru_post_ppi/engines_2.pdf
+ACMGuru_post_ppi/engines_3.pdf
+ACMGuru_post_ppi/engines_4.pdf
+ACMGuru_post_ppi/engines_5.pdf
+ACMGuru_post_ppi/engines_6.pdf
+ACMGuru_post_ppi/engines_legend.pdf
+ACMGuru_post_ppi/post_ppi_MCL_ID_22_586_evidence_plots_with_filter.pdf
+ACMGuru_post_ppi/post_ppi_MCL_ID_22_586_patch1.pdf
+#
+# ACMGuru_gene_illustrate_post_ppi
+ACMGuru_gene_illustrate_post_ppi/ACMGuru_post_ppi_MCL_ID_22_586_836_evidence_plots_with_filter.pdf
+ACMGuru_gene_illustrate_post_ppi/ACMGuru_post_ppi_MCL_ID_22_586_836_evidence_plots_without_filter.pdf
+#
+# ACMGuru_gene_illustrate_protein_structure_post_ppi
+ACMGuru_gene_illustrate_protein_structure_post_ppi/LILRA5_A6NI73_2D3V.png
+#
+# ACMGuru_post_ppi_uniprotr
+ACMGuru_post_ppi_uniprotr/uniprotr_p_chr_merged_22_586_836.pdf
+ACMGuru_post_ppi_uniprotr/uniprotr_p_chr_pathway_ID_22.pdf
+ACMGuru_post_ppi_uniprotr/uniprotr_p_chr_pathway_ID_586.pdf
+ACMGuru_post_ppi_uniprotr/uniprotr_p_chr_pathway_ID_836.pdf
+ACMGuru_post_ppi_uniprotr/uniprotr_p_goi_merged_22_586_836.pdf
+ACMGuru_post_ppi_uniprotr/uniprotr_p_goi_merged_22_586_836_p1.pdf
+ACMGuru_post_ppi_uniprotr/uniprotr_p_goi_merged_22_586_836_p2.pdf
+ACMGuru_post_ppi_uniprotr/uniprotr_p_goi_merged_22_586_836_p3.pdf
+ACMGuru_post_ppi_uniprotr/uniprotr_p_goi_merged_22_586_836_p4.pdf
+ACMGuru_post_ppi_uniprotr/uniprotr_p_goi_merged_22_586_836_p5.pdf
+ACMGuru_post_ppi_uniprotr/uniprotr_p_goi_merged_22_586_836_p6.pdf
+ACMGuru_post_ppi_uniprotr/uniprotr_p_goi_pathway_ID_22.pdf
+ACMGuru_post_ppi_uniprotr/uniprotr_p_goi_pathway_ID_586.pdf
+ACMGuru_post_ppi_uniprotr/uniprotr_p_goi_pathway_ID_836.pdf
+ACMGuru_post_ppi_uniprotr/uniprotr_p_kr_merged_22_586_836.pdf
+ACMGuru_post_ppi_uniprotr/uniprotr_p_kr_pathway_ID_22.pdf
+ACMGuru_post_ppi_uniprotr/uniprotr_p_kr_pathway_ID_586.pdf
+ACMGuru_post_ppi_uniprotr/uniprotr_p_kr_pathway_ID_836.pdf
+#
+# ACMGuru_singlecase
+ACMGuru_singlecase/ACMGuru_singlecase_evidence_plots_without_filter.pdf
+ACMGuru_singlecase/ACMGuru_singlecase_patch2.pdf
+#
+# AutoDestructR
+AutoDestructR/AutoDestructR.pdf
+AutoDestructR/AutoDestructR_singlecase.pdf
+# AutoDestructR/AutoDestructR_singlecase.pptx
+# AutoDestructR/AutoDestructR_singlecase_stacked.pptx
+# AutoDestructR/AutoDestructR.pptx
+#
+# ProteoMCLustR
+ProteoMCLustR/ppi_line_dist_whole_genome_v1_compared.pdf
+#
+# TREM2_example
+# TREM2_example/5UD7.png
+# TREM2_example/5UD7_D39.png
+# TREM2_example/5UD7_D87.png
+# TREM2_example/5UD7_R47.png
+# TREM2_example/5UD7_T96.png
+# TREM2_example/TREM2_Q9NZC2_5UD7.png
+#
+annotation_datasets_category/annotation_datasets_category.png
+#
+# archipelago
+archipelago/archipelago_plot.jpg
+archipelago/archipelago_plot.pdf
+archipelago/archipelago_plot.png
+archipelago/vsat_raw_plot.jpg
+archipelago/vsat_raw_plot.pdf
+archipelago/vsat_raw_plot.png
+#
+# cohort_summary_curated
+cohort_summary_curated/cohort_plots_cat_con.pdf
+cohort_summary_curated/cohort_plots_post_ppi_cat_con_redVSAT.pdf
+cohort_summary_curated/cohort_plots_singlecase_cat_con_statistic.pdf
+#
+# diagrams
+# diagrams/df_report_discussion_22_586_biorender.png
+# diagrams/mcl_skat_1.pdf
+# diagrams/mcl_skat_2.pdf
+# diagrams/mcl_skat_trim.pdf
+#
+# joint_pca
+joint_pca/vec_pca_pheno_grid.pdf
+joint_pca/vec_pca_pheno_grid.png
+joint_pca/vec_pca_val.pdf
+joint_pca/vec_pheno_PC1PC2.pdf
+joint_pca/vec_pheno_raw.pdf
+#
+# singlecase
+# singlecase/single_case_analysis_IFIH1.pdf
+#
+# uniprotr
+uniprotr/uniprotr_combined_go_plots.pdf
+uniprotr/uniprotr_combined_keeg_reactome_plots.pdf
+#
+# untangleR
+untangleR/ppi_network_v2_22.pdf
+untangleR/ppi_network_v2_22_586_836.pdf
+untangleR/ppi_network_v2_586.pdf
+untangleR/ppi_network_v2_836.pdf
+#
+# variant_level
+variant_level/plink_assoc.png
+variant_level/plink_assoc_ppman.png
+variant_level/plink_assoc_ppman_qq.png
