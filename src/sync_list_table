@@ -1,11 +1,16 @@
-# Tables /////////
+# Tables wth indexed studyIDs /////////
+# These tables have numeric IDs replaced for the study publication for original IDs see `sync_list_table`.
+# Replacement is run during `sync_publication.sh` which calls `tables_ID_Mapping.R`.
 #
 # ACMGuru_post_ppi
-ACMGuru_post_ppi/ACMGuru_post_ppi_genetic_df_report_main_text_22_586_836.csvs
-ACMGuru_post_ppi/ACMGuru_post_ppi_MCL_ID_22_586_836_df_report_clinical_text.txt
-ACMGuru_post_ppi/df_report_discussion_22_586_836.csv
+ACMGuru_post_ppi/ACMGuru_post_ppi_genetic_df_report_main_text_22_586_836_indexedstudyIDs.csv
+ACMGuru_post_ppi/df_report_discussion_22_586_836_indexedstudyIDs.csv
 #
 # ACMGuru_singlecase
-ACMGuru_singlecase/ACMGuru_singlecase_genetic_df_report_main_text.csv
-ACMGuru_singlecase/ACMGuru_singlecase_genetic_df_report_main_text_clinical_short.csv
+ACMGuru_singlecase/ACMGuru_singlecase_genetic_df_report_main_text_indexedstudyIDs.csv
+ACMGuru_singlecase/ACMGuru_singlecase_genetic_df_report_main_text_clinical_short_indexedstudyIDs.csv
+ACMGuru_singlecase/ACMGuru_singlecase_genetic_df_borghesi_vus_genes_report_main_indexedstudyIDs.csv
+#
+# No IDs to replace in the following files:
+ACMGuru_post_ppi/ACMGuru_post_ppi_MCL_ID_22_586_836_df_report_clinical_text.txt
 ACMGuru_singlecase/ACMGuru_singlecase_df_report_clinical_text.txt

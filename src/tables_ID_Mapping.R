@@ -5,12 +5,32 @@ library(dplyr)
 
 # files <- c("Table_1_ACMGuru_singlecase_df_report_cohort_data.csv", "Table_2_ACMGuru_post_ppi_genetic_df_report_main_text_22_586_836.csv")
 
-path1 <- "../../data/ACMGuru_singlecase/ACMGuru_singlecase_genetic_df_report_main_text.csv"
-path2 <- "../../data/ACMGuru_singlecase/ACMGuru_singlecase_genetic_df_report_main_text_clinical.csv"
-path3 <- "../../data/ACMGuru_singlecase/ACMGuru_singlecase_genetic_df_report_main_text_clinical_short.csv"
-path4 <- "../../data/ACMGuru_post_ppi/ACMGuru_post_ppi_genetic_df_report_main_text_22_586_836.csv"
 
-files <- c(path1, path2, path3)
+# Function to extract file paths from the sync list
+get_file_paths <- function(file_list_path, base_dir = "../data") {
+  # Read lines from the file list
+  lines <- readLines(file_list_path)
+  
+  # Filter out comment lines and empty lines
+  valid_lines <- lines[!grepl("^#", lines) & lines != ""]
+  
+  # Prepend the base directory to create full paths
+  file_paths <- paste0(base_dir, "/", valid_lines)
+  
+  return(file_paths)
+}
+
+# Path to your sync list
+sync_list_path <- "./sync_list_table_raw"  # Update this path to the actual location
+
+# Call the function to get the file paths
+files <- get_file_paths(sync_list_path)
+
+# path1 <- "../../data/ACMGuru_singlecase/ACMGuru_singlecase_genetic_df_report_main_text.csv"
+# path2 <- "../../data/ACMGuru_singlecase/ACMGuru_singlecase_genetic_df_report_main_text_clinical.csv"
+# path3 <- "../../data/ACMGuru_singlecase/ACMGuru_singlecase_genetic_df_report_main_text_clinical_short.csv"
+# path4 <- "../../data/ACMGuru_post_ppi/ACMGuru_post_ppi_genetic_df_report_main_text_22_586_836.csv"
+# files <- c(path1, path2, path3)
 
 # Initialize a vector to store unique IDs from all files
 all_unique_ids <- character()
@@ -18,6 +38,7 @@ all_unique_ids <- character()
 # Loop through each file to collect all unique sample_IDs
 for (file in files) {
   data <- read.csv(file)
+  # data <- read.table(file)
   all_unique_ids <- union(all_unique_ids, unique(data[[2]]))  # Assuming sample_IDs are in column 2
 }
 
@@ -28,7 +49,7 @@ id_mapping <- setNames(seq_along(all_unique_ids), all_unique_ids)
 mapping_df <- data.frame(Original_ID = names(id_mapping), Index_ID = id_mapping, row.names = NULL)
 
 # Save the mapping to a CSV file
-write.csv(mapping_df, "../../data/ID_Mapping.csv", row.names = FALSE)
+write.csv(mapping_df, "../data/ID_Mapping.csv", row.names = FALSE)
 
 # Apply the ID mapping to each file
 for (file in files) {

@@ -473,9 +473,9 @@ df_report_main_text <- df_report |>
                 HGVSp,
                 HGVSc,
                 Consequence,
-                # IMPACT,                   
+                IMPACT,
                 genotype,
-                # Inheritance,
+                Inheritance,
                 gnomAD_AF,
                 # comp_het_flag  
                 # list_of_used_columns

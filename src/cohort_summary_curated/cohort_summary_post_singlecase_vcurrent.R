@@ -1,3 +1,7 @@
+setwd("../ACMGuru_singlecase/")
+source("ACMGuru_singlecase_vcurrent.R")
+setwd("../cohort_summary_curated")
+
 # Load required packages
 library(dplyr)
 library(tidyr)
@@ -12,9 +16,6 @@ library(stringr)
 library(knitr)
 library(patchwork)
 
-setwd("../ACMGuru_singlecase/")
-source("ACMGuru_singlecase_vcurrent.R")
-setwd("../cohort_summary_curated")
 # load single case report
 # df_report <- readRDS("../../data/singlecase/df_report.Rds")
 # 
@@ -80,7 +81,7 @@ names(df_report_main_text)
 df <- merge(df_report_main_text, df, by="sample.id", all=T)
 
 df$group <- "singlecase_damaging"
-df$group <- ifelse(is.na(df$ACMG_total_score), "singlecase_NA", df$group)
+df$group <- ifelse(is.na(df$`ACMG score`), "singlecase_NA", df$group)
 
 # continuous: hist plots -----
 # Convert the data from wide to long
@@ -357,7 +358,7 @@ ggsave("../../images/cohort_summary_curated/cohort_plots_singlecase_cat_con_stat
 # kable latex tables ----
 ACMG_total_score_cutoff_pathogenic <- 6
 # df_summaries <- df |> filter(ACMG_score >= 4)
-df_summaries <- df |> filter(ACMG_total_score >= ACMG_total_score_cutoff_pathogenic)
+df_summaries <- df |> filter(`ACMG score` >= ACMG_total_score_cutoff_pathogenic)
 
 df_summaries |> 
   group_by(genotype) |>
@@ -369,16 +370,16 @@ df_summaries |>
   summarise(n())|>
   kable("latex", booktabs = TRUE)
 
-df_summaries |> 
-  ungroup() |>
-  group_by(ACMG_total_score, Consequence, IMPACT) |>
-  summarise(unique_variants = n()) |>
-  arrange(desc(ACMG_total_score), IMPACT, unique_variants) |>
-  kable("latex", booktabs = TRUE)
+# df_summaries |> 
+#   ungroup() |>
+#   group_by(`ACMG score`, Consequence, IMPACT) |>
+#   summarise(unique_variants = n()) |>
+#   arrange(desc(`ACMG score`), IMPACT, unique_variants) |>
+#   kable("latex", booktabs = TRUE)
 
 
 # final table ----
-df_summaries <- df_summaries |> dplyr::select(-Strong_patho, -Moder_patho, -Suppor_patho)
+# df_summaries <- df_summaries |> dplyr::select(-Strong_patho, -Moder_patho, -Suppor_patho)
 
 saveRDS(df_summaries, file="../../data/ACMGuru_singlecase/ACMGuru_singlecase_df_report_cohort_data.Rds")
 write.csv(df_summaries,  paste0("../../data/ACMGuru_singlecase/ACMGuru_singlecase_df_report_cohort_data.csv"))
@@ -388,7 +389,7 @@ df_dedup <- df_summaries |> dplyr::select(sample.id, study.site: psofa.hem) |> u
 write.csv(df_dedup,  paste0("../../data/ACMGuru_singlecase/ACMGuru_singlecase_df_report_dedup.csv"))
 
 # df_report_main_text |>
-#   filter(ACMG_total_score >= 6) |> 
+#   filter(`ACMG score` >= 6) |> 
 #   dplyr::select(SYMBOL, 
 #                 Consequence, 
 #                 sample.id,
@@ -398,13 +399,11 @@ write.csv(df_dedup,  paste0("../../data/ACMGuru_singlecase/ACMGuru_singlecase_df
 
 # collapse Inheritance column 
 df_report_main_text %>%
-  filter(ACMG_total_score >= 6) %>%
+  filter(`ACMG score` >= 6) %>%
   group_by(SYMBOL, Consequence, sample.id, genotype) %>%
   summarise(Inheritance = paste(Inheritance, collapse = ", ")) %>%
   ungroup() %>%
   kable("latex", booktabs = TRUE)
-
-
 
 # Textual clinical report ----
 # Load necessary libraries

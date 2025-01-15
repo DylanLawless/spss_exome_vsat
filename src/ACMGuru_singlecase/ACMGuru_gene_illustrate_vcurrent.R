@@ -1,11 +1,13 @@
 source("ACMGuru_singlecase_vcurrent.R")
 
+df_report_main_text$SYMBOL |> unique()
+
 library(dplyr)
 library(ggplot2)
 library(plotly)
 
 hold <- df_report
-ACMG_threshold_to_plot <- 8
+ACMG_threshold_to_plot <- 10 # filter >= this value
 
 rm(list=setdiff(ls(), c("ACMG_threshold_to_plot", "df_report", "df", "geneset_MCL_ID", "file_suffix", "output_directory")))
 # file_suffix <- "gene_illustrate_"
@@ -114,6 +116,8 @@ df_report_top <-
   filter(any(ACMG_total_score >= ACMG_threshold_to_plot))
 
 df_report <- df_report_top
+df_report$SYMBOL |> unique()
+
 # recover original df_report from `hold` if required
 
 # fill uniprot seqid ----
@@ -243,7 +247,8 @@ create_plot <- function(filter_acmg_score) {
 				 			filter(ACMG_score > 0 )
 				 		# If current_protein_positions is empty, skip this iteration since we have no reason to plot the gene
 				 		if(nrow(current_protein_positions) == 0) {
-				 			return(NULL)
+				 		  print("TEST keeping Null protein position")
+				 		  # return(NULL)
 				 		}
 				 	}
 
@@ -391,6 +396,13 @@ create_and_save_plots(plot_list_without_filter, file_suffix, "evidence_plots_wit
 
 
 
+# test
+
+df_report |> filter(ACMG_total_score > 9) |> dplyr::select(sample.id, SYMBOL, HGVSp, ACMG_total_score)  |> unique()
+
+df_report |> filter(ACMG_total_score > 9) |> dplyr::select(SYMBOL)  |> unique() |> as.list()
+
+filtered_dt_uniprot$SYMBOL |> unique() |> sort()
 
 # Save individual plots ----
 
@@ -420,7 +432,8 @@ create_plot <- function(filter_acmg_score, target_SYMBOL) {
                    filter(ACMG_score > 0 )
                  # If current_protein_positions is empty, skip this iteration since we have no reason to plot the gene
                  if(nrow(current_protein_positions) == 0) {
-                   return(NULL)
+                   print("TEST keeping Null protein position")
+                   # return(NULL)
                  }
                }
                

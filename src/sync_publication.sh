@@ -8,8 +8,15 @@
 
 set -e
 
-# First move some images from data to images
+echo "First run the studyID indexing for publication tables"
+Rscript tables_ID_Mapping.R
+
+echo "Then move any images from data to images - some modules do not ouput to ./images by default"
 cp ../data/variant_level/*.png ../images/variant_level/
+cp ~/web/ProteoMCLustR/data/ppi_user_ouput/ppi_line_dist_whole_genome_v1_compared.pdf ../images/ProteoMCLustR
+cp  ../data/archipelago/*pdf  ../images/archipelago/
+cp  ../data/archipelago/*png  ../images/archipelago/
+cp  ../data/archipelago/*jpg  ../images/archipelago/
 
 # Image directories
 src_img_dir="../images"
@@ -35,7 +42,7 @@ sync_files () {
 
     dir_name=$(dirname "$line")
     file_name=$(basename "$line")
-    echo "$file_name"
+    # echo "$file_name"
 
     local src_file="$src_dir/$line"
     local dest_dir="$dest_base_dir/$dir_name"
@@ -45,7 +52,7 @@ sync_files () {
 
     if [ -f "$src_file" ]; then
         cp "$src_file" "$dest_file"
-        echo "Copied $src_file to $dest_file"
+       # echo "Copied $src_file to $dest_file"
     else
         echo "Source file does not exist: $src_file"
     fi
@@ -58,3 +65,4 @@ sync_files "$src_img_dir" "$dest_img_base_dir" "$img_file_list"
 # Sync table files
 sync_files "$src_tbl_dir" "$dest_tbl_base_dir" "$tbl_file_list"
 
+echo "All files synced from sync_list_figure and sync_list_table."

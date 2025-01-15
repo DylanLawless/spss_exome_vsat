@@ -29,6 +29,9 @@ output_directory <- "ACMGuru_post_ppi"
 
 df_report_main_text <- readRDS(paste0("../../data/ACMGuru_post_ppi/df_report_main_text_", paste(geneset_MCL_ID, collapse="_"), ".Rds"))
 
+
+df_report_main_text <- readRDS(paste0("../../data/ACMGuru_post_ppi/df_report_main_text_", paste(geneset_MCL_ID, collapse="_"), ".Rds"))
+
 # load single case report
 # df_report_main_text <- readRDS(file="../../data/singlecase/df_report_main_text.Rds")
 
@@ -290,7 +293,7 @@ df_report_main_text |>
 
 # collapse Inheritance column 
 df_report_main_text |>
-  filter(ACMG_total_score >= 1) |>
+  filter("ACMG score" >= 1) |>
   group_by(SYMBOL, Consequence, sample.id, genotype) |>
   summarise(Inheritance = paste(Inheritance, collapse = ", ")) |>
   dplyr::select(-Inheritance) |> # drop inheritance since we have none
@@ -299,7 +302,7 @@ df_report_main_text |>
 
 # collapse Inheritance column 
 df_report_main_text |>
-  filter(ACMG_total_score >= 6) |>
+  filter("ACMG score" >= 6) |>
   group_by(SYMBOL, HGVSp, Consequence, sample.id, genotype) |>
   summarise(Inheritance = paste(Inheritance, collapse = ", ")) |>
   dplyr::select(-Inheritance) |> # drop inheritance since we have none
@@ -314,10 +317,184 @@ unique_symbols <- df_report_main_text %>%
 
 unique_symbols
 
-nrow(df_report_main_text)
-# nrow(df_report_main_text |> dplyr::select(rownames) |> unique())  
-# nrow(df_report_main_text |> dplyr::select(rownames, sample.id) |> unique())  
-# nrow(df_report_main_text |> dplyr::select(rownames, SYMBOL) |> unique())  
+library(dplyr)
+
+# save gene list per pathway to file -----
+
+# Extract unique SYMBOL and pathway_id pairs
+df_unique_symbols <- df_report_main_text %>%
+  select(SYMBOL, pathway_id) %>%
+  unique()
+
+# Group by pathway_id, summarise symbols, and print each group
+df_unique_symbols_grouped <- df_unique_symbols %>%
+  group_by(pathway_id) %>%
+  summarise(SYMBOLS = paste(unique(SYMBOL), collapse = ", ")) %>%
+  ungroup() %>%
+  arrange(pathway_id)
+
+# Prepare a text file for output
+gene_list_file <- "../../data/cohort_summary_curated/cohort_post_ppi_enriched_pathway_genes.txt"
+
+# Check if the file exists and remove if it does to start fresh
+if (file.exists(gene_list_file)) {
+  file.remove(gene_list_file)
+}
+
+# Open a file connection for writing in append mode
+file_conn <- file(gene_list_file, open = "a")
+
+# Loop to append each pathway_id with its symbols to a text file
+for (i in seq_along(df_unique_symbols_grouped$pathway_id)) {
+  line <- sprintf("pathway ID %s had %s\n", df_unique_symbols_grouped$pathway_id[i], df_unique_symbols_grouped$SYMBOLS[i])
+  writeLines(line, file_conn, useBytes = TRUE)
+}
+
+# Close the file connection
+close(file_conn)
+
+
+# save variant counts to file ----
+library(dplyr)
+
+# Calculate the total number of variant
+count_variant_counts <- df_report_main_text %>%
+  summarise(variants = n())
+
+count_variant_counts
+
+# Calculate the total number of variant observations by genotype
+count_variant_counts_by_genotype <- df_report_main_text %>%
+  group_by(genotype) %>%
+  summarise(variants = n())
+
+count_variant_counts_by_genotype
+
+# Calculate the total number of variant observations by "Variant GRCh38"
+count_variant_counts_by_position <- df_report_main_text %>%
+  group_by(`Variant GRCh38`) %>%
+  summarise(variants = n()) %>% 
+  arrange(desc(variants))
+
+count_variant_counts_by_position
+
+# Calculate the number of unique variants
+count_unique_variants <- df_report_main_text %>%
+  distinct(`Variant GRCh38`, .keep_all = TRUE) %>%
+  count(genotype, name = "unique_variants")
+
+count_unique_variants
+
+# Calculate singletons: unique variants that occur only once across all sample.id
+count_singletons <- df_report_main_text %>%
+  group_by(`Variant GRCh38`) %>%
+  summarise(count = n()) %>%
+  filter(count == 1) %>%
+  ungroup() %>%
+  summarise(singletons = n())
+
+# Inheritance
+count_unique_with_inheritance <- df_report_main_text %>%
+  group_by(`Variant GRCh38`, Inheritance) %>%
+  summarise(count = n(), .groups = 'drop') %>%
+  unique() %>%
+  # filter(count == 1) %>%
+  count(Inheritance)
+
+# Print the results
+print(count_unique_with_inheritance)
+
+# Impact
+count_variant_counts_by_impact <- df_report_main_text %>%
+  group_by(`Variant GRCh38`, IMPACT) %>%
+  distinct(`Variant GRCh38`, .keep_all = TRUE) %>%
+  summarise(count = n(), .groups = 'drop') %>%
+  # filter(count == 1)%>%
+  count(IMPACT)
+
+print(count_variant_counts_by_impact)
+
+# Impact genotype
+count_variant_counts_by_impact_genotype <- df_report_main_text %>%
+  group_by(`Variant GRCh38`, IMPACT, genotype) %>%
+  distinct(`Variant GRCh38`, .keep_all = TRUE) %>%
+  summarise(count = n(), .groups = 'drop') %>%
+  filter(genotype == 2)%>%
+  count(IMPACT)
+
+print(count_variant_counts_by_impact_genotype)
+
+count_variant_iuis <- df_report_main_text %>%
+  filter(! Inheritance == "NA") %>%
+  select(SYMBOL, IMPACT,  HGVSp, HGVSc, genotype)
+
+
+# save variant counts to file text ----
+text0 <- "We identified a total of X variant observations (X heterozygous, X homozygous), "
+
+text1 <- "of which X were unique variants (X heterozygous, X homozygous),"
+
+text2 <- "X of which were singletons."
+
+text3 <- "The inheritance pattern of known IUIS IEI were checked with only X autosomal recessive variants present and X unknown."
+
+text4 <- "The functional variant impact consisted of X high impact variants (frameshift, stop gained or lost, start lost, splice acceptor or donor), X moderate variants (missense, inframe deletion), and X homozygous moderate."
+
+
+print(text0) 
+print(count_variant_counts)
+print(count_variant_counts_by_genotype)
+
+print(text1) 
+print(count_unique_variants)
+
+print(text2)
+print(count_singletons)
+
+print(text3)
+print(count_unique_with_inheritance)
+print(count_variant_iuis)
+
+print(text4)
+print(count_variant_counts_by_impact)
+print(count_variant_counts_by_impact_genotype)
+
+# File setup
+variant_summary_file <- "../../data/cohort_summary_curated/cohort_post_ppi_enriched_pathway_variant_summary_detailed.txt"
+
+# Check if the file exists and remove if it does to start fresh
+if (file.exists(variant_summary_file)) {
+  file.remove(variant_summary_file)
+}
+
+# Open a file connection for writing in append mode
+file_conn <- file(variant_summary_file, open = "a")
+
+writeLines(text0, file_conn)
+capture.output(print(count_variant_counts), file = file_conn)
+capture.output(print(count_variant_counts_by_genotype), file = file_conn)
+
+writeLines(text1, file_conn)
+capture.output(print(count_unique_variants), file = file_conn)
+
+writeLines(text2, file_conn)
+capture.output(print(count_singletons), file = file_conn)
+
+writeLines(text3, file_conn)
+capture.output(print(count_unique_with_inheritance), file = file_conn)
+capture.output(print(count_variant_iuis), file = file_conn)
+
+writeLines(text4, file_conn)
+capture.output(print(count_variant_counts_by_impact), file = file_conn)
+capture.output(print(count_variant_counts_by_impact_genotype), file = file_conn)
+
+
+# Close the file connection
+close(file_conn)
+
+
+
+
 
 
 
@@ -350,6 +527,17 @@ df_summaries |>
   arrange(desc(ACMG_total_score), IMPACT, unique_variants) |>
   kable("latex", booktabs = TRUE)
 
+
+
+
+
+
+
+
+
+# If you need to match the specific output in your text, consider
+
+
 # final table ----
 # df_summaries <- df_summaries |> dplyr::select(-Strong_patho, -Moder_patho, -Suppor_patho)
 
@@ -371,13 +559,11 @@ df_dedup <- df_summaries |> dplyr::select(sample.id, study.site: psofa.hem) |> u
 
 # collapse Inheritance column 
 df_report_main_text %>%
-  filter(ACMG_total_score >= 6) %>%
+  filter("ACMG score" >= 6) %>%
   group_by(SYMBOL, Consequence, sample.id, genotype) %>%
-  summarise(Inheritance = paste(Inheritance, collapse = ", ")) %>%
+  # summarise(Inheritance = paste(Inheritance, collapse = ", ")) %>%
   ungroup() %>%
   kable("latex", booktabs = TRUE)
-
-
 
 # Textual clinical report ----
 # Load necessary libraries

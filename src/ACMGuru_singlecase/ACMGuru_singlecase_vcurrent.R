@@ -80,7 +80,7 @@ for (f in 1:length(file_list)) {
 		unique() %>% # this is import to count genomic positions once rather than transcripts
 		mutate(cohort_pheno = ifelse(grepl("^setpt", sample), "0", "1")) %>%
 		group_by(rownames, cohort_pheno) %>%
-		summarize(genotype_total_frequency = sum(genotype)/n(), .groups = "drop") %>%
+		dplyr::summarize(genotype_total_frequency = sum(genotype)/n(), .groups = "drop") %>%
 		pivot_wider(names_from = cohort_pheno, values_from = genotype_total_frequency, names_prefix = "frequency_in_")  %>%
 		mutate(is_frequency_in_0_less = ifelse(frequency_in_0 < frequency_in_1, "Yes", "No"))
 
@@ -601,8 +601,6 @@ saveRDS(df_report_main_text_clinical, file=paste0("../../data/", output_director
 
 geneset_MCL_ID <- "" #ignore pathway level info
 write.csv(df_report_main_text_clinical,  paste0("../../data/", output_directory, "ACMGuru_singlecase_genetic_df_report_main_text_clinical.csv"))
-
-
 
 
 df_report_main_text_clinical_short <- df_report_main_text_clinical |>
