@@ -18,6 +18,7 @@ cp  ../data/archipelago/*pdf  ../images/archipelago/
 cp  ../data/archipelago/*png  ../images/archipelago/
 cp  ../data/archipelago/*jpg  ../images/archipelago/
 
+
 # Image directories
 src_img_dir="../images"
 dest_img_base_dir="/Users/dylanlawless/Library/Mobile Documents/com~apple~CloudDocs/post/manuscripts_epfl/spss_exomes/lawless2023_spss_exome_vcurrent/publication_figure_sync"
@@ -66,3 +67,25 @@ sync_files "$src_img_dir" "$dest_img_base_dir" "$img_file_list"
 sync_files "$src_tbl_dir" "$dest_tbl_base_dir" "$tbl_file_list"
 
 echo "All files synced from sync_list_figure and sync_list_table."
+
+
+echo "Transfer standalone reference tables"
+cp ../ref/annotation_datasets/data/datasources_compiled.tsv "${dest_tbl_base_dir}/ref/Table_S1_datasources_compiled.tsv"
+cp ../ref/10875_2022_1289_MOESM2_ESM_DLcleaned.tsv          "${dest_tbl_base_dir}/ref/Table_S2_10875_2022_1289_MOESM2_ESM_DLcleaned.tsv"
+cp ../ref/acmg_criteria_table.txt                           "${dest_tbl_base_dir}/ref/Table_S3_acmg_criteria_table.txt"
+cp ../ref/acmg_criteria_table_caveats.txt                   "${dest_tbl_base_dir}/ref/Table_S4_acmg_criteria_table_caveats.txt"
+cp ../ref/acmg_scoring_system_points.txt                    "${dest_tbl_base_dir}/ref/Table_S5_acmg_scoring_system_points.txt"
+cp ../ref/acmg_scoring_system_for_tally.txt                 "${dest_tbl_base_dir}/ref/Table_S6_acmg_scoring_system_for_tally.txt"
+cp ../ref/varsome_calibrated_insilico_thresholds.tsv        "${dest_tbl_base_dir}/ref/Table_S7_varsome_calibrated_insilico_thresholds.tsv"
+cp "${dest_tbl_base_dir}/ACMGuru_post_ppi/df_report_discussion_22_586_836.csv" \
+	"${dest_tbl_base_dir}/ACMGuru_post_ppi/Table_S8_df_report_discussion_22_586_836.csv"
+cp "${dest_tbl_base_dir}/ACMGuru_post_ppi/ACMGuru_post_ppi_genetic_df_report_main_text_22_586_836_indexedstudyIDs.csv" \
+	"${dest_tbl_base_dir}/ACMGuru_post_ppi/Table_S9_ACMGuru_post_ppi_genetic_df_report_main_text_22_586_836_indexedstudyIDs.csv"
+
+
+
+
+
+
+
+echo "END"

@@ -320,6 +320,151 @@ print(all_continuous_summary_stats)
 # Save the combined summary statistics table to a CSV file
 write.csv(all_continuous_summary_stats, file = "../../data/cohort_summary_curated/all_continuous_stats.csv", row.names = FALSE)
 
+
+# publication table ----
+print(all_category_counts)
+print(all_continuous_summary_stats)
+
+## cohort ----
+select_cohort <- all_category_counts |> 
+  filter(Variable == "cohort_pheno") |>
+  mutate(Variable = case_when(
+  Variable == "cohort_pheno" ~ "Cohort",
+  TRUE ~ Variable)) |>
+  mutate(Category = case_when(
+    Category == "1" ~ "Sepsis patient",
+    TRUE ~ Category))
+
+select_cohort
+
+## sex ----
+select_sex <- all_category_counts |> 
+  filter(Variable == "gender") |>
+  mutate(Variable = case_when(
+    Variable == "gender" ~ "Sex",
+    TRUE ~ Variable))
+
+select_sex
+
+## age ----
+select_age <- all_category_counts |> filter(Variable == "age.category2")
+
+select_age <- select_age |>
+  mutate(Category = case_when(
+  Category == "Preterm newborn" ~ "1.Preterm newborn",
+  Category == "Term newborn" ~ "2.Term newborn",
+  Category == "Infant (1mt - 1y)" ~ "3.Infant (1mt - 1y)",
+  Category == "Toddler (2y - 5y)" ~ "4.Toddler (2y - 5y)",
+  Category == "School age (6y - 12y)" ~ "5.School age (6y - 12y)",
+  Category == "Adolescent (13y - 17y)" ~ "6.Adolescent (13y - 17y)",
+  TRUE ~ Category  # Default 
+))  %>%
+  arrange(Category)  |>
+  mutate(Category = sub("^\\d+\\.", "", Category)) |>
+  mutate(Variable = case_when(
+    Variable == "age.category2" ~ "Agr group",
+    TRUE ~ Variable  # Keeps any other variable unchanged
+  ))
+
+select_age
+
+## hospital.acp ----
+select_hospaq <- all_category_counts |> 
+  filter(Variable == "hospital.acquired") |>
+  mutate(Variable = case_when(
+    Variable == "hospital.acquired" ~ "Hospital acquired",
+    TRUE ~ Variable))
+
+select_hospaq
+
+## icu ----
+select_icu <- all_category_counts |> 
+  filter(Variable == "icu") |>
+  mutate(Variable = case_when(
+    Variable == "icu" ~ "ICU",
+    TRUE ~ Variable))
+
+select_icu
+
+## comorbid ----
+select_comorbidity <- all_category_counts |> 
+  filter(Variable == "comorbidity") |>
+  mutate(Variable = case_when(
+    Variable == "comorbidity" ~ "Comorbidities",
+    TRUE ~ Variable))
+
+select_comorbidity
+
+## ccc.final ----
+select_comorbidgrp <- all_category_counts |> 
+  filter(Variable == "ccc.final") |>
+  mutate(Variable = case_when(
+    Variable == "ccc.final" ~ "Comorbidity group",
+    TRUE ~ Variable))
+
+select_comorbidgrp
+
+## selected_dur_hosp ----
+selected_dur_hosp <- 
+  all_continuous_summary_stats |> 
+  select(Variable, Median, Min, Max, SD) |>
+  filter(
+    Variable == "hosp.dur.post.bc" # Length of stay after sepsis onset (days)
+  )
+
+selected_dur_hosp
+
+## selected_dur_picu ----
+selected_dur_picu <- 
+  all_continuous_summary_stats |> 
+  select(Variable, Median, Min, Max, SD) |>
+  filter(
+    Variable == "picu.dur.post.bc" # Length of ICU stay after sepsis onset
+    # Variable == "picu.dur" |  # Length of ICU stay
+  )
+
+
+# rbind ----
+print("Demographics and clinical characteristics")
+
+selec_cat_bind <- 
+  bind_rows(
+select_cohort, 
+select_sex,
+select_age,
+select_hospaq,
+select_icu,
+select_comorbidity,
+select_comorbidgrp,
+)
+
+selec_cont_bind <- 
+  bind_rows(
+    selected_dur_hosp,
+    selected_dur_picu
+  )
+
+# publication table Reformat  ----
+# Format categorical data
+formatted_categorical <- selec_cat_bind %>%
+  mutate(Value = paste0(Count, " (", Percentage, "%)")) %>%
+  select(Variable, Category, Value)
+
+# Format continuous data
+formatted_continuous <- selec_cont_bind %>%
+  mutate(Value = paste0("Median: ", Median, ", Range: [", Min, "-", Max, "], SD: ", SD)) %>%
+  select(Variable, Value)
+
+# Combine both formatted data into a single dataframe
+combined_data_clinical_summary <- bind_rows(formatted_categorical, formatted_continuous)
+
+# Print or view the combined table
+print(combined_data_clinical_summary)
+
+# Save the combined summary statistics table to a CSV file
+write.table(combined_data_clinical_summary, file = "../../data/cohort_summary_curated/combined_data_clinical_summary.tsv", quote = FALSE, row.names = FALSE, sep = "\t")
+
+
 # date ----
 # df$hosp.adm
 # library(lubridate)

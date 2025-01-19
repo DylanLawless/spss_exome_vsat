@@ -1,0 +1,9 @@
+# origianlly
+# SCRATCH_DIR="/scratch/lawless/spss_exome/control"
+# WORK_DIR="/work/gr-fe/lawless/spss/exome/control/data"
+# SRC_DIR="/work/gr-fe/lawless/spss/exome/control/src"
+
+# updated
+SCRATCH_DIR="/scratch/lawless/spss_exome/control"
+WORK_DIR="/work/gr-fe/lawless/spss/exome/data/control"
+SRC_DIR="/work/gr-fe/lawless/spss/exome/src/control"

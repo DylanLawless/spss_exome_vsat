@@ -1,0 +1,8 @@
+<https://gist.github.com/ckandoth/d6de7eff889e8860dd5f3f3dd234c045>
+
+but with conda, not mamba
+
+conda install -y -c conda-forge -c bioconda -c defaults ensembl-vep==106.0 htslib==1.14 bcftools==1.14 samtools==1.14
+
+
+vep --help

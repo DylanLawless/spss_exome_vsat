@@ -1,0 +1,23 @@
+Here are some notes for Mack - I hardcoded some file names and kep some old code versions until we finish and cleanup. 
+
+## Path
+/work/backup/gr-fe/lawless/spss/exome/src/ppi
+/work/backup/gr-fe/lawless/spss/exome/data/ppi
+
+## Datasets
+whole_genome_v4_c7_400	ppi_whole_genome_v3.R	STRING quality score .4
+whole_genome_v4_c7_700	ppi_whole_genome_v5.R	STRING quality score .7
+whole_genome_v4_c7_900	ppi_whole_genome_v4.R	STRING quality score .9
+
+Quality score .7 gave the most protein retained in pathways after clustering, therefore was the dataset used downstream. 
+
+## Final result
+write.csv(df, file=paste0("../../data/ppi/mcl_clusters_recode_df_", file_suffix, ".csv"), quote = FALSE)
+
+/work/backup/gr-fe/lawless/spss/exome/data/ppi/mcl_clusters_recode_df_whole_genome_v5_c7_700.csv
+
+## Header
+,ID,Items
+Column 1 = df row number
+ID = MCL cluster ID
+Item = Protein name

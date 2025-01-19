@@ -1,0 +1,39 @@
+<https://gist.github.com/ckandoth/d6de7eff889e8860dd5f3f3dd234c045>
+
+but with conda, not mamba:
+
+# ###########
+# Set up ----
+# ###########
+
+mamba create -n vep
+conda activate vep
+
+conda install -y -c conda-forge -c bioconda -c defaults ensembl-vep==106.0 htslib==1.14 bcftools==1.14 samtools==1.14
+
+conda deactivate
+
+# ###############
+# Set up end ----
+# ###############
+
+conda list
+conda env list
+conda --info envs
+
+# #############
+# Reattach ----
+# #############
+
+conda activate vep
+vep --help
+conda deactivate
+
+# ###############
+# Work end ----
+# ###############
+
+For ~/.bash_profile
+# 2 lines for miniconda off for R install. Check is needed later¬
+export PATH="$HOME/miniconda3/bin:$PATH"¬
+source ~/miniconda3/etc/profile.d/conda.sh

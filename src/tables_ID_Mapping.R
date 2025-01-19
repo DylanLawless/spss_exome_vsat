@@ -1,10 +1,10 @@
 library(dplyr)
 
-# List of file names
-# files <- c("Table_1_ACMGuru_singlecase_df_report_cohort_data.csv", "Table_2_ACMGuru_post_ppi_genetic_df_report_main_text_22_586_836.csv")
-
-# files <- c("Table_1_ACMGuru_singlecase_df_report_cohort_data.csv", "Table_2_ACMGuru_post_ppi_genetic_df_report_main_text_22_586_836.csv")
-
+# This is run from `sync_publication.sh`
+# It gathers all files for publication then makes a list of study IDs. 
+# Filenames for publication are in `./sync_list_table_raw`.
+# These are then replaced with a sequential count; 1,2,3...n.
+# The new tables are send to the publication dir and a file of the translation is saved.
 
 # Function to extract file paths from the sync list
 get_file_paths <- function(file_list_path, base_dir = "../data") {
@@ -25,12 +25,6 @@ sync_list_path <- "./sync_list_table_raw"  # Update this path to the actual loca
 
 # Call the function to get the file paths
 files <- get_file_paths(sync_list_path)
-
-# path1 <- "../../data/ACMGuru_singlecase/ACMGuru_singlecase_genetic_df_report_main_text.csv"
-# path2 <- "../../data/ACMGuru_singlecase/ACMGuru_singlecase_genetic_df_report_main_text_clinical.csv"
-# path3 <- "../../data/ACMGuru_singlecase/ACMGuru_singlecase_genetic_df_report_main_text_clinical_short.csv"
-# path4 <- "../../data/ACMGuru_post_ppi/ACMGuru_post_ppi_genetic_df_report_main_text_22_586_836.csv"
-# files <- c(path1, path2, path3)
 
 # Initialize a vector to store unique IDs from all files
 all_unique_ids <- character()

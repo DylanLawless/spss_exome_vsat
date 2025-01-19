@@ -1,0 +1,4 @@
+# updated
+SCRATCH_DIR="/scratch/lawless/spss_exome/dataset1"
+WORK_DIR="/work/gr-fe/lawless/spss/exome/data/dataset1"
+SRC_DIR="/work/gr-fe/lawless/spss/exome/src/dataset1"

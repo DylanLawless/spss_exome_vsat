@@ -82,6 +82,13 @@ Figure: Summary of the algorithm implemented by [ProteoMCLustR](https://github.c
 
 ```
 .
+├── preprocessing
+│   └── control
+│   └── dataset1
+│   └── dataset2
+│   └── joint
+│   └── gene_level
+│   └── ppi
 ├── ACMGuru_post_ppi
 │   └── ACMGuru_post_ppi_vcurrent.R
 ├── ACMGuru_singlecase
@@ -101,7 +108,27 @@ Figure: Summary of the algorithm implemented by [ProteoMCLustR](https://github.c
     ├── stand_alone_vcf_to_table.R
     └── vcf_to_tables.R
 
+├── ProteoMCLustR_github_clone
+├── ACMG_filters
+├── archipelago
+├── session_info.txt
+
+├── sync_publication.sh
+├── sync_list_figure
+├── sync_list_table
+├── sync_list_table_raw
+├── tables_ID_Mapping.R
+
+├── untangleR
 4 directories, 14 files
+
+
+├── gene_level
+├── joint_pca
+├── post_ppi
+
+└── variant_level
+
 ```
 
 ### Inputs

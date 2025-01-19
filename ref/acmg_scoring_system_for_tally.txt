@@ -1,0 +1,6 @@
+Interpretation	Total score
+Pathogenic	≥ 10
+Likely Pathogenic	6 − 9
+Uncertain Significance	0 − 5
+Likely Benign	−6 − −1
+Benign	≤−7

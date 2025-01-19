@@ -19,5 +19,5 @@ plink \
 # plink --bfile output3 --logistic --covar file.pca
 
 # assoc model with control/case (1/2) and PCA
-plink --bfile output3 --assoc --covar bcftools_gatk_norm_pca.eigenvec --allow-no-sex
+plink --bfile output3 --assoc --covar bcftools_gatk_norm_pca.eigenvec_covar --allow-no-sex
 

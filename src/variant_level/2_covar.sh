@@ -8,7 +8,8 @@ source ./variables.txt
 
 cd  ${VARLEVEL_DIR}
 
-# get PCA
-cp ${WORK_DIR}/pca_output/bcftools_gatk_norm_pca.eigenvec ./
+# get PCA with covariates
+# cp ${WORK_DIR}/pca_output/bcftools_gatk_norm_pca.eigenvec ./
+cp ${WORK_DIR}/pca_output/bcftools_gatk_norm_pca.eigenvec_covar ./
 
 
