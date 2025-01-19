@@ -19,6 +19,10 @@ Each tool and method used in our study is documented in detail to aid reproducib
 
 Contributions and insights from readers are highly encouraged, as we aim to foster a collaborative environment to enhance our understanding of sepsis at the genetic level.
 
+The code in this project is quiet chaotic due to the incremental development. 
+We are building a new project with a clean and documented style. 
+See <https://swisspedhealth-pipelinedev.github.io/docs/> if you are interested in reading up some of the main content now documented more formally. 
+
 ## Publication files
 
 From `sync_publication.sh`
@@ -81,54 +85,27 @@ Figure: Summary of the algorithm implemented by [ProteoMCLustR](https://github.c
 # Directory Structure and File Descriptions
 
 ```
-.
-├── preprocessing
-│   └── control
-│   └── dataset1
-│   └── dataset2
-│   └── joint
-│   └── gene_level
-│   └── ppi
-├── ACMGuru_post_ppi
-│   └── ACMGuru_post_ppi_vcurrent.R
-├── ACMGuru_singlecase
-│   ├── ACMGuru_singlecase_vcurrent.R
-│   └── sync.sh
-├── cohort_summary_curated
-│   ├── cohort_summary_post_ppi_vcurrent.R
-│   ├── cohort_summary_post_singlecase_vcurrent.R
-│   ├── cohort_summary_vcurrent.R
-│   └── sync.sh
-├── directory_structure.txt
-├── document.sh
-└── stand_alone_vcf_to_table
-    ├── gather.R
-    ├── genotype_clean.R
-    ├── progress_bar.R
-    ├── stand_alone_vcf_to_table.R
-    └── vcf_to_tables.R
-
-├── ProteoMCLustR_github_clone
+src/
 ├── ACMG_filters
+├── ACMGuru_post_ppi
+├── ACMGuru_singlecase
+├── ProteoMCLustR_github_clone
 ├── archipelago
+├── archive
+├── cohort_summary_curated
+├── document.sh
+├── joint_pca
+├── post_ppi
+├── preprocessing
 ├── session_info.txt
-
-├── sync_publication.sh
+├── stand_alone_vcf_to_table
 ├── sync_list_figure
 ├── sync_list_table
 ├── sync_list_table_raw
+├── sync_publication.sh
 ├── tables_ID_Mapping.R
-
 ├── untangleR
-4 directories, 14 files
-
-
-├── gene_level
-├── joint_pca
-├── post_ppi
-
 └── variant_level
-
 ```
 
 ### Inputs
@@ -207,6 +184,6 @@ The root directory contains:
 
 ### Usage
 
-To utilize these scripts, you should have R installed on your system along with the required libraries. Each script can be run independently, depending on the specific needs of the analysis. Data paths and specific parameters should be adjusted in the scripts according to your dataset and analysis requirements.
+To utilise these scripts, you should have R installed on your system along with the required libraries. Each script can be run independently, depending on the specific needs of the analysis. Data paths and specific parameters should be adjusted in the scripts according to your dataset and analysis requirements.
 
 
