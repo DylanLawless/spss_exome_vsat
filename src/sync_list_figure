@@ -92,3 +92,6 @@ untangleR/ppi_network_v2_836.pdf
 variant_level/plink_assoc.png
 variant_level/plink_assoc_ppman.png
 variant_level/plink_assoc_ppman_qq.png
+#
+# ACMGuru_singlecase validation test
+ACMGuru_singlecase/validation_check_score.pdf

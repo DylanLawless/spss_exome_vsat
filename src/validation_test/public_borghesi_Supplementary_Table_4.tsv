@@ -1,0 +1,42 @@
+es	Sex	Pathogen	Clinical focus	Gene	HGVS.p	Inheritance	Read Depth	Frequencies in gnomAD	Variant type
+CID	male	GAS	ENT	BCL11B	p.Pro311Gln	AD	63	0	SNP
+CID	male	SP	pneumonia	BCL11B	p.Arg247His	AD	98	0	SNP
+CID+	male	HI	CNS	SEMA3E	p.Pro171Ser	AD	72	9,87E+00	SNP
+CID+	female	SP	pneumonia	STAT3	p.Leu235fs	AD	45	0	DEL
+CID+	male	SP	CNS	TBX1	p.Pro494Leu	AD	22	0	SNP
+CID+	female	GAS	pneumonia	KMT2D	p.Arg2905His	AD	48	4,09E-01	SNP
+CID+	female	GAS	pneumonia	CHD7	p.Pro900Arg	AD	34	3,73E+00	SNP
+CID+	male	SA	bone/joint	CHD7	p.Pro2351Leu	AD	77	1,66E+00	SNP
+CID+	female	GAS	other	SAMD9	p.Arg1040Cys	AD	83	4,88E+00	SNP
+CID+	male	SP	CNS	WAS	p.Glu131Lys	XL	25	0.00260066	SNP
+CID+	male	NM	CNS	SAMD9	p.Ile1498Thr	AD	154	0	SNP
+CID+	male	NM	CNS	CHD7	p.Val1698Met	AD	23	0	SNP
+CID+	male	SA	bone/joint	CHD7	p.Pro101Leu	AD	99	4,07E-01	SNP
+CID+	female	SA	cellulitis	KMT2D	p.Ala312Val	AD	105	0	SNP
+CID+	male	GBS	CNS	CHD7	p.Pro2892Ala	AD	187	0	SNP
+CID+	male	SP	CNS	CHD7	p.Ala99Val	AD	83	1,22E+00	SNP
+CID+	male	SP	pneumonia	KDM6A	p.Thr591Met	XL	88	0.000827514	SNP
+CID+	male	GBS	CNS	SAMD9	p.Cys494*	AD	187	1,63E-01	SNP
+PAD	male	GAS	cellulitis	TCF3	p.Phe26Leu	AD	27	0	SNP
+PAD	male	SA	bone/joint	NFKB2	p.Ile504Thr	AD	151	2,03E+00	SNP
+PAD	male	SP	bone/joint	NFKB2	p.Asp17Tyr	AD	41	0	SNP
+PAD	male	SP	No focus	TCF3	p.Gly307Val	AD	53	0	SNP
+PAD	male	SP	pneumonia	TNFRSF13B	p.Glu140Lys	AD	27	2,44E+00	SNP
+PAD	male	SA	bone/joint	IRF2BP2	p.Lys442Ile	AD	75	0	SNP
+PAD	female	SP	CNS	PTEN	p.Ser360Gly	AD	175	4,18E-01	SNP
+PAD	male	GBS	ENT	TCF3		AD	61	2,13E+00	SNP
+PIRD	male	SA	bone/joint	BACH2	p.Arg495Trp	AD	120	0	SNP
+PIRD	female	SP	CNS	NFAT5	p.Gly389Ser	AD	92	2,44E+00	SNP
+PIRD	male	SA	bone/joint	BACH2	p.Glu283Lys	AD	156	1,63E+00	SNP
+PIRD	male	HI	pneumonia	BACH2	p.Leu689Phe	AD	113	0	SNP
+PD	male	SA	bone/joint	CYBB	p.Gly364Arg	XL	40	0.00394664	SNP
+IID	female	GAS	pneumonia	CXCR4	p.Ala317Thr	AD	28	0	SNP
+IID	female	GAS	cellulitis	IL17F	p.Arg131Trp	AD	62	8,94E-01	SNP
+IID	female	GAS	bone/joint	CXCR4	p.Tyr25Cys	AD	112	0	SNP
+IID	male	SA	No focus	IRAK1	p.Arg366Cys	XL	23	0.000859898	SNP
+AID	female	SP	pneumonia	PLCG2	p.Pro38Leu	AD	105	0	SNP
+AID	male	SA	bone/joint	POLA1	p.Asp1208His	XL	26	0.00398868	SNP
+AID	male	SP	pneumonia	PLCG2	p.Ala133Gly	AD	55	2,03E+00	SNP
+CD	female	SP	pneumonia	CFH	p.Pro503Ala	AD	176	1,63E+00	SNP
+CD	male	HI	ENT	CFH	p.Gly1155Ala	AD	180	0	SNP
+CD	male	GBS	No focus	C4A	p.Pro1120Thr	AR	31	0.00222338	SNP
