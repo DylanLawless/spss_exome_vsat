@@ -348,3 +348,22 @@ df_x |> filter(ACMG_total_score > 5) |> dplyr::select(sample) |> unique()
 # Today, this still often depends on the researchers intuition and both research and commercial software generally provide automated of this final result for "research use only".
 # We continue to improve such downstream progress for future work (e.g. https://github.com/DylanLawless/heracles is currently under development). 
 
+# Specific screen for variants that pass QV ----
+
+df_long <- read.table(file = "../../data/ACMGuru_singlecase/ACMGuru_singlecase_genetic_df_report.csv", sep = ",", header = T)
+
+df_borgh <- read.table(file="public_borghesi_Supplementary_Table_4.tsv", header = TRUE, sep = "\t")
+
+df_borgh$SYMBOL <- df_borgh$Gene
+df_borgh$HGVSp <- df_borgh$HGVS.p
+df_borgh$source <- "Borgh"
+df_long$source <- "Lawl"
+
+df_long <- df_long |> dplyr::select(SYMBOL, HGVSp, source)
+df_borgh <- df_borgh |> dplyr::select(SYMBOL, HGVSp, source)
+df_long$HGVSp <- sub(".*:", "", df_long$HGVSp)
+df_m <- merge(df_borgh, df_long, by = c("SYMBOL", "HGVSp")) |> unique()
+
+# Of the variants that pass QV filters, 17 reported in our main text table with new evidence ACMG score.
+df_m$gene_variant <- paste(df_m$SYMBOL, df_m$HGVSp, sep=" ")
+cat(paste(df_m$gene_variant, collapse=", "), "\n")
