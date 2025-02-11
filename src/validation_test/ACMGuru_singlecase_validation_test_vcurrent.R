@@ -259,17 +259,92 @@ ggsave(paste("../../images/", output_directory, file_suffix, "validation_check_s
 
 # END -----
 
+# Other variants in known patient ----
 
-df_val <- df_val |> dplyr::select(SYMBOL, HGVSp, rownames)
-df_borgh$source <- "borgh"
-df_val$source <- "law"
+patient_list <- c("BE056", "LU013", "LAU164")
+
+# Create a regular expression from the patient_list
+pattern <- paste(patient_list, collapse="|")
+
+# Filter df where 'sample' partially matches any pattern in patient_list
+df_known_patients <- df %>%
+  filter(grepl(pattern, sample))
 
 
-# df_borgh_gene <- df_borgh$SYMBOL |> unique()
-# df_validate_genes <- df_val |> filter(SYMBOL %in% df_borgh_gene) |> unique()
-
-head(df_borgh)
-head(df_val)
+df_known_patients$sample  |> unique()
 
 
+
+
+df_report_main_text <- df_known_patients |> 
+  dplyr::select(sample, 
+                SYMBOL, 
+                rownames,
+                HGVSp,
+                HGVSc,
+                Consequence,
+                genotype,
+                Inheritance,
+                gnomAD_AF,
+                ACMG_total_score
+  ) |> 
+  arrange(SYMBOL, sample,
+          desc(ACMG_total_score),
+          sample)
+
+# Add a new column with the maximum ACMG_total_score for each SYMBOL
+df_report_main_text <- df_report_main_text %>%
+  group_by(SYMBOL) %>%
+  mutate(max_score = max(ACMG_total_score)) %>%
+  ungroup()
+
+# Arrange the data frame based on sample, then descending max_score, SYMBOL, and then by desc(ACMG_total_score)
+df_report_main_text <- df_report_main_text %>%
+  unique() %>%
+  arrange(sample, desc(max_score), SYMBOL, desc(ACMG_total_score))
+
+df_report_main_text |> nrow()
+
+colnames(df_report_main_text)[colnames(df_report_main_text) == 'ACMG_total_score'] <- 'ACMG score'
+colnames(df_report_main_text)[colnames(df_report_main_text) == 'rownames'] <- 'Variant GRCh38'
+
+# write.csv(df_report_main_text,  paste0("../../data/", output_directory, "ACMGuru_singlecase_genetic_df_report_main_text.csv"))
+
+# are other XL genotype == 2 ? ----
+
+df_x <- df |> filter(Inheritance == "XL") |> filter(genotype == 2) |> 
+  dplyr::select(sample, 
+                SYMBOL, 
+                rownames,
+                HGVSp,
+                HGVSc,
+                Consequence,
+                genotype,
+                Inheritance,
+                gnomAD_AF,
+                ACMG_total_score
+  ) |> 
+  unique()
+
+df_x <- df_x %>%
+  group_by(SYMBOL) %>%
+  mutate(max_score = max(ACMG_total_score)) %>%
+  ungroup()
+
+df_x <- df_x %>%
+  unique() %>%
+  arrange(sample, desc(max_score), SYMBOL, desc(ACMG_total_score))
+
+df_x$sample |> unique()
+df_x |> filter(ACMG_total_score > 5) |> dplyr::select(sample) |> unique()
+
+# It is possible to encounter events were a patient has a high evidence interpretation score in a variant and a lower evidence score in what might be considered a better candidate. 
+# For example, in the known PID disease genes we may wish to prioritise a homozygous X-linked variant because of the potentital importance based on "intuition".
+# We had 42 cases where a X-linked disease gene was detected with genotype 2 (compount het, homozygous, hemizyous).
+# Of these, seven had scores >=6 and all of these are reported in our main text table 1. 
+# Therefore, while in our study these were reported as top candidates for the patient, it might always be so. 
+# Our analysis passes the first challenge of automated evidence quantification and prioritises interpretation. 
+# The remaining hurdle is the countless nuanced criteria to prioritise disease-speicific priors in order to make the final determination. 
+# Today, this still often depends on the researchers intuition and both research and commercial software generally provide automated of this final result for "research use only".
+# We continue to improve such downstream progress for future work (e.g. https://github.com/DylanLawless/heracles is currently under development). 
 
