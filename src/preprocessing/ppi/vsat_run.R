@@ -268,6 +268,7 @@ if (!exists("obj")) {
 	unique_symbols <- unique(OK$MCL_ID)
 	
 	# compute SKAT test statistic using bootstrap resampling and covariates
+	# PC1-4, sex, age days^2, study site, and ICU stay
 	obj <- SKAT_Null_Model(phenotype ~ X[,3] + X[,4] + X[,5] + X[,6], + X[,25] + X[,26] + X[,27] + X[,28],
 							out_type="D", 
 							type.Resampling="bootstrap", 
