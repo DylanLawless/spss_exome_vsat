@@ -52,6 +52,7 @@ varsome <- read.table(file = "../../ref/varsome_calibrated_insilico_thresholds.t
 # qv ----
 # Define the chromosome identifiers
 chromosomes <- c(1:22, "X")
+# chromosomes <- c(21:22, "X") # TEMP TEST
 # chromosomes <- c(21:22, "X")
 
 # Generate file names using paste0 and the chromosome identifiers
@@ -244,6 +245,7 @@ df <- df %>%
 # source acmg filters ----
 print("We are adding PS3 now")
 
+source("../ACMG_filters/distribution_variables.R")
 source("../ACMG_filters/acmg_filters.R")
 
 # plot scores ----

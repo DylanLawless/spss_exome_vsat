@@ -37,6 +37,9 @@ samples <- samples |> filter(cohort_pheno == 1)
 
 # Clinical data
 df <- read.csv("../../data/cohort_summary_curated/sepsis_v2.csv")
+
+
+
 names(df)
 df <- df |>dplyr::select(
   -exome_dataset_1,
@@ -46,8 +49,16 @@ df <- df |>dplyr::select(
   -sqlpkey,
   -personal.id)
 
+df$sample_id <- df$sample.id
 df$sample.id <- gsub("-", "", df$sample.id)
+hold <- df
 
+# Get a validation from original source ----
+df_val <- df |> select(sample.id, sample_id)
+write.table(df_val, file = "../../data/cohort_summary_curated/validate_combined_data_clinical_summary.tsv", quote = FALSE, row.names = FALSE, sep = "\t")
+df <- df |> select(-sample_id)
+
+# merge ----
 df <- merge(samples, df, by = "sample.id", all.x = TRUE)
 
 missing_samples <- subset(df, is.na(study.site))
