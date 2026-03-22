@@ -16,65 +16,72 @@ library(stringr)
 library(knitr)
 library(patchwork)
 
-# load single case report
-# df_report <- readRDS("../../data/singlecase/df_report.Rds")
+# # load single case report
+# # df_report <- readRDS("../../data/singlecase/df_report.Rds")
+# # df_report_main_text <- readRDS("../../data/singlecase/df_report_main_text.Rds")
 # 
-# df_report_main_text <- readRDS("../../data/singlecase/df_report_main_text.Rds")
+# # load clinical info
+# samples <- read.csv("../../data/cohort_summary_curated/SAMPLE_LIST", header = F)
+# samples$sample <- samples$V1
+# samples <- samples |> dplyr::select(-V1)
+# 
+# # Pheno ----
+# # Create new column "cohort_pheno"
+# samples$cohort_pheno <- samples$sample
+# 
+# # Replace any value that starts with "setpt" with "0" in the "cohort_pheno" column
+# samples$cohort_pheno[grep("^setpt", samples$sample)] <- "0"
+# 
+# # Replace any value that does not start with "setpt" with "1" in the "cohort_pheno" column
+# samples$cohort_pheno[!grepl("^setpt", samples$sample)] <- "1"
+# 
+# # clean IDs
+# samples <- separate(samples, sample, into = c("V1", "V2", "V3", "V4", "V5"))
+# 
+# samples <- samples |>
+#   mutate(V1 = ifelse(V1 == "raw", NA, V1))
+#   
+# samples <- samples |>
+#   unite(V1, V2, col = "sample.id", sep = "", na.rm = TRUE)
+# 
+# samples <- samples |> filter(cohort_pheno == 1)
+# 
+# # Clinical data
+# # df <- read.csv("../../data/cohort_summary_curated/sepsis_v2.csv")
+# # 
+# # names(df)
+# # df <- df |> dplyr::select(
+# #   -exome_dataset_1,
+# #   -exome_dataset_1.1,  
+# #   -exome_dataset_2_path,
+# #   -exome_dataset_1_path,
+# #   -sqlpkey,
+# #   -personal.id)
+# 
+# df$sample.id <- gsub("-", "", df$sample.id)
+# 
+# df <- merge(samples, df, by = "sample.id", all.x = TRUE)
+# 
+# missing_samples <- subset(df, is.na(study.site))
+# missing_sample_ids <- missing_samples$sample.id
+# 
+# # save for calling in other scripts ----
+# # df_cohort_clin_feat <-  df
+# saveRDS(df, file = "../../data/cohort_summary_curated/cohort_summary_curated_r_df_singlecase.Rds")
+# 
+# 
+# # text summary description Hmisc ----
+# df <- df |> dplyr::select(
+#   # -sample.id,
+#   -V3,
+#   -V4,
+#   -V5)
 
-# load clinical info
-samples <- read.csv("../../data/cohort_summary_curated/SAMPLE_LIST", header = F)
-samples$sample <- samples$V1
-samples <- samples |> dplyr::select(-V1)
+# updated clinical data ----
+df <- readRDS(file = "../../data/cohort_summary_curated/cohort_summary_curated_r_df.Rds")
 
-# Pheno ----
-# Create new column "cohort_pheno"
-samples$cohort_pheno <- samples$sample
-
-# Replace any value that starts with "setpt" with "0" in the "cohort_pheno" column
-samples$cohort_pheno[grep("^setpt", samples$sample)] <- "0"
-
-# Replace any value that does not start with "setpt" with "1" in the "cohort_pheno" column
-samples$cohort_pheno[!grepl("^setpt", samples$sample)] <- "1"
-
-# clean IDs
-samples <- separate(samples, sample, into = c("V1", "V2", "V3", "V4", "V5"))
-
-samples <- samples |>
-  mutate(V1 = ifelse(V1 == "raw", NA, V1))
-  
-samples <- samples |>
-  unite(V1, V2, col = "sample.id", sep = "", na.rm = TRUE)
-
-samples <- samples |> filter(cohort_pheno == 1)
-
-# Clinical data
-df <- read.csv("../../data/cohort_summary_curated/sepsis_v2.csv")
-names(df)
-df <- df |> dplyr::select(
-  -exome_dataset_1,
-  -exome_dataset_1.1,  
-  -exome_dataset_2_path,
-  -exome_dataset_1_path,
-  -sqlpkey,
-  -personal.id)
-
-df$sample.id <- gsub("-", "", df$sample.id)
-
-df <- merge(samples, df, by = "sample.id", all.x = TRUE)
-
-missing_samples <- subset(df, is.na(study.site))
-missing_sample_ids <- missing_samples$sample.id
-
-# save for calling in other scripts ----
-# df_cohort_clin_feat <-  df
-saveRDS(df, file = "../../data/cohort_summary_curated/cohort_summary_curated_r_df_singlecase.Rds")
-
-# text summary description Hmisc ----
-df <- df |> dplyr::select(
-  # -sample.id,
-  -V3,
-  -V4,
-  -V5)
+output_directory <- "ACMGuru_singlecase/"
+df_report_main_text <- readRDS(file=paste0("../../data/", output_directory, "df_report_main_text.Rds"))
 
 names(df)
 names(df_report_main_text)
@@ -98,6 +105,44 @@ df_long <- df |>
   dplyr::select(c(group, where(is.numeric))) |>  
   pivot_longer(cols = -c(group), names_to = "variable", values_to = "value")  
 
+# clean names ----
+df_long <- df_long %>%
+  mutate(variable = case_when(
+    variable == "age_mo"           ~ "Age in months",
+    variable == "episode.nr"       ~ "Episode Number",
+    variable == "picu.delay"       ~ "PICU Delay",
+    variable == "picu.los"         ~ "PICU Length of Stay",
+    variable == "picu.los.bc"      ~ "PICU Length of Stay\nAfter Blood Culture",
+    variable == "death.delay"      ~ "Death Delay",
+    variable == "cons05.score.agg" ~ "Cons05 Aggregated number\nof Organ Failures",
+    variable == "pelod.score.agg"  ~ "PELOD Score",
+    variable == "pelod.cvs.agg"    ~ "PELOD Cardiovascular",
+    variable == "pelod.resp.agg"   ~ "PELOD Respiratory",
+    variable == "pelod.cns.agg"    ~ "PELOD CNS",
+    variable == "pelod.ren.agg"    ~ "PELOD Renal",
+    variable == "pelod.hem.agg"    ~ "PELOD Haematological",
+    variable == "psofa.score.agg"  ~ "pSOFA Score",
+    variable == "psofa.cvs.agg"    ~ "pSOFA Cardiovascular",
+    variable == "psofa.resp.agg"   ~ "pSOFA Respiratory",
+    variable == "psofa.cns.agg"    ~ "pSOFA CNS",
+    variable == "psofa.ren.agg"    ~ "pSOFA Renal",
+    variable == "psofa.hep.agg"    ~ "pSOFA Hepatic",
+    variable == "psofa.hem.agg"    ~ "pSOFA Haematological",
+    variable == "age.at.bc.days"   ~ "Age (days) at\nBlood Culture",
+    variable == "hosp.los.bc"      ~ "Hospital Length of Stay\nAfter Blood Culture",
+    variable == "hosp.delay"       ~ "Hospital Delay",
+    variable == "podium.cns.agg"   ~ "PODIUM CNS",
+    variable == "podium.resp.agg"  ~ "PODIUM Respiratory",
+    variable == "podium.cvs.agg"   ~ "PODIUM Cardiovascular",
+    variable == "podium.ren.agg"   ~ "PODIUM Renal",
+    variable == "podium.hep.agg"   ~ "PODIUM Hepatic",
+    variable == "podium.hem.agg"   ~ "PODIUM Haematological",
+    variable == "podium.coag.agg"  ~ "PODIUM Coagulation",
+    variable == "podium.imm.agg"   ~ "PODIUM Immune",
+    variable == "podium.n.od.agg"  ~ "PODIUM Neurological/Other",
+    variable == "podium.score.agg" ~ "PODIUM Score",
+    TRUE ~ variable
+  ))
 
 # Define a helper function to get the next value in a vector
 next_in_list <- function(lst, value) {
@@ -215,7 +260,8 @@ stat_continuous <-
   geom_hline(linetype="dotted", 
              yintercept=-log10( .05/nrow(test_results_df) ),
              color="red") + # Bonferroni correction threshold
-  theme(axis.text.x  = element_text(angle=45, hjust=1, vjust=1)) # Rotate the x label
+  theme(axis.text.x  = element_text(angle=45, hjust=1, vjust=1)) +
+  theme(plot.subtitle = element_text(size = 8))
 
 stat_continuous
 
@@ -235,6 +281,31 @@ df_long <- df |>
 df_long <- df_long |> 
   filter(!(variable %in% c("hosp.adm", "hosp.dis", "picu.adm", "picu.dis", "bc.sampling", "death.date"))) 
 
+df_long <- df_long %>%
+  mutate(variable = case_when(
+    variable == "age.grp"         ~ "Age Group",
+    variable == "sex"             ~ "Sex",
+    variable == "focus.grp"       ~ "Clinical Focus Group",
+    variable == "study.site"      ~ "Study Site",
+    variable == "category"        ~ "Category",
+    variable == "picu"            ~ "PICU",
+    variable == "picu.reason"     ~ "PICU Reason",
+    variable == "picu.los3"       ~ "PICU Length\nof Stay (≥3 days)",
+    variable == "death.picu.los3" ~ "Death or\nextended PICU stay",
+    variable == "ccc.final"       ~ "Chronic condition classification\nsystem Version 2",
+    variable == "pathogen.grp"    ~ "Pathogen Group",
+    variable == "cons05.mods"     ~ "Cons05 MODS",
+    variable == "cons05.cvs.agg"   ~ "Cons05 Cardiovascular",
+    variable == "cons05.resp.agg"  ~ "Cons05 Respiratory",
+    variable == "cons05.cns.agg"   ~ "Cons05 CNS",
+    variable == "cons05.ren.agg"   ~ "Cons05 Renal",
+    variable == "cons05.hep.agg"   ~ "Cons05 Hepatic",
+    variable == "cons05.hem.agg"   ~ "Cons05 Haematological",
+    variable == "any.comorb"      ~ "Any Comorbidity",
+    variable == "cahai"           ~ "Community or \nHospital-acquired Sepsis",
+    variable == "death.30.bc"     ~ "Death within 30 Days\nafter Blood Culture",
+    TRUE ~ variable
+  ))
 
 df_long <- df_long |>
   mutate(value = str_replace_all(
@@ -353,7 +424,7 @@ patch2 <- (stat_continuous / stat_categorical) + plot_annotation(tag_levels = 'A
 # red is VSAT contributer
 ggsave("../../images/cohort_summary_curated/cohort_plots_singlecase_cat_con_bluePATHO.pdf", plot = patch1, height = 10, width = 20)
 
-ggsave("../../images/cohort_summary_curated/cohort_plots_singlecase_cat_con_statistic.pdf", plot = patch2, height = 6, width = 6)
+ggsave("../../images/cohort_summary_curated/cohort_plots_singlecase_cat_con_statistic.pdf", plot = patch2, height = 6, width = 12)
 
 # kable latex tables ----
 ACMG_total_score_cutoff_pathogenic <- 6
@@ -384,8 +455,8 @@ df_summaries |>
 saveRDS(df_summaries, file="../../data/ACMGuru_singlecase/ACMGuru_singlecase_df_report_cohort_data.Rds")
 write.csv(df_summaries,  paste0("../../data/ACMGuru_singlecase/ACMGuru_singlecase_df_report_cohort_data.csv"))
 
-
-df_dedup <- df_summaries |> dplyr::select(sample.id, study.site: psofa.hem) |> unique()
+names(df_summaries)
+df_dedup <- df_summaries |> dplyr::select(sample.id, study.site: podium.coag.agg) |> unique()
 write.csv(df_dedup,  paste0("../../data/ACMGuru_singlecase/ACMGuru_singlecase_df_report_dedup.csv"))
 
 # df_report_main_text |>
@@ -435,47 +506,133 @@ cohort_features <- summarize_data(df_summaries)
 
 print(cohort_features)
 
+names(cohort_features)
+
 # Define variable descriptions based on provided definitions
-# Define variable descriptions and group them by category
+# # Define variable descriptions and group them by category
+# variable_descriptions <- list(
+#   "Demographic Information" = list(
+#     episode.nr.stats = "Number of previous sepsis episodes registered in the same child",
+#     age.days.stats = "Patient age at blood culture sampling in days",
+#     gender.distribution = "Gender distribution of the cohort",
+#     age.category2.distribution = "Age categories based on the time of blood culture sampling",
+#     ethnicity.distribution = "Ethnic background of the cohort"
+#   ),
+#   "Hospitalization Data" = list(
+#     hosp.dur.stats = "Total length of hospital stay in days",
+#     hosp.dur.post.bc.stats = "Hospital stay length after blood culture sampling in days",
+#     picu.dur.stats = "Total length of stay in the Pediatric Intensive Care Unit (PICU) in days",
+#     picu.dur.post.bc.stats = "PICU stay length after blood culture sampling in days",
+#     hospital.adm.delay.stats = "Delay in hospital admission from time of initial presentation in days"
+#     # hosp.dis.distribution = "Dates of hospital discharges",
+#     # picu.dis.distribution = "Dates of PICU discharges"
+#   ),
+#   "Clinical Outcomes" = list(
+#     cons05.score.stats = "Total number of organ failures as defined by the 2005 consensus",
+#     pelod.score.stats = "Total number of organ failures as defined by the Pediatric Logistic Organ Dysfunction Score (PELOD-2)",
+#     psofa.score.stats = "Total number of organ failures as defined by the 2017 pSOFA",
+#     outcome.death.distribution = "Mortality outcomes within 30 days post-admission",
+#     outcome.picu.los.distribution = "Impact of PICU length of stay on outcomes",
+#     outcome.death.picu.distribution = "Mortality outcomes specifically within the PICU settings"
+#   ),
+#   "Organ Failures and Sepsis Details" = list(
+#     cons05.cvs.distribution  = "Cardiovascular failure score under 2005 consensus definitions",
+#     cons05.resp.distribution = "Respiratory failure score under 2005 consensus definitions",
+#     cons05.cns.distribution = "Central nervous system failure score under 2005 consensus definitions",
+#     cons05.ren.distribution = "Renal failure score under 2005 consensus definitions",
+#     cons05.hep.distribution = "Hepatic failure score under 2005 consensus definitions",
+#     cons05.hem.distribution = "Hematological failure score under 2005 consensus definitions"
+#   ),
+#   "Pathogen Information" = list(
+#     clin.focus.distribution = "Primary clinical focus or reasons for medical intervention",
+#     pathogen.grp.distribution = "Types of pathogens identified in blood cultures",
+#     cvc.clabsi.distribution = "Incidence of central venous catheter-associated bloodstream infections"
+#   )
+# )
+
+
 variable_descriptions <- list(
   "Demographic Information" = list(
     episode.nr.stats = "Number of previous sepsis episodes registered in the same child",
-    age.days.stats = "Patient age at blood culture sampling in days",
-    gender.distribution = "Gender distribution of the cohort",
-    age.category2.distribution = "Age categories based on the time of blood culture sampling",
-    ethnicity.distribution = "Ethnic background of the cohort"
+    age.at.bc.days.stats = "Patient age at blood culture sampling in days",
+    sex.distribution = "Gender distribution of the cohort",
+    age.grp.distribution = "Age categories based on the time of blood culture sampling"
+    # ethnicity.distribution = "Ethnic background of the cohort"  # no matching dataset variable
   ),
-  "Hospitalization Data" = list(
-    hosp.dur.stats = "Total length of hospital stay in days",
-    hosp.dur.post.bc.stats = "Hospital stay length after blood culture sampling in days",
-    picu.dur.stats = "Total length of stay in the Pediatric Intensive Care Unit (PICU) in days",
-    picu.dur.post.bc.stats = "PICU stay length after blood culture sampling in days",
-    hospital.adm.delay.stats = "Delay in hospital admission from time of initial presentation in days"
-    # hosp.dis.distribution = "Dates of hospital discharges",
-    # picu.dis.distribution = "Dates of PICU discharges"
+  "Hospitalisation Data" = list(
+    # hosp.dur.stats = "Total length of hospital stay in days",  # no matching dataset variable
+    hosp.los.bc.stats = "Hospital stay length after blood culture sampling in days",
+    picu.los.stats = "Total length of stay in the PICU in days",
+    picu.los.bc.stats = "PICU stay length after blood culture sampling in days",
+    hosp.delay.stats = "Delay in hospital admission from time of initial presentation in days"
   ),
   "Clinical Outcomes" = list(
-    cons05.score.stats = "Total number of organ failures as defined by the 2005 consensus",
-    pelod.score.stats = "Total number of organ failures as defined by the Pediatric Logistic Organ Dysfunction Score (PELOD-2)",
-    psofa.score.stats = "Total number of organ failures as defined by the 2017 pSOFA",
-    outcome.death.distribution = "Mortality outcomes within 30 days post-admission",
-    outcome.picu.los.distribution = "Impact of PICU length of stay on outcomes",
-    outcome.death.picu.distribution = "Mortality outcomes specifically within the PICU settings"
+    cons05.score.agg.stats = "Total number of organ failures as defined by the 2005 consensus",
+    pelod.score.agg.stats = "Total number of organ failures as defined by the PELOD-2",
+    psofa.score.agg.stats = "Total number of organ failures as defined by the 2017 pSOFA",
+    death.30.bc.distribution = "Mortality outcomes within 30 days post-admission",
+    picu.los3.distribution = "Impact of PICU length of stay on outcomes"
+    # outcome.death.picu.distribution = "Mortality outcomes specifically within the PICU settings"  # no matching dataset variable
   ),
   "Organ Failures and Sepsis Details" = list(
-    cons05.cvs.distribution  = "Cardiovascular failure score under 2005 consensus definitions",
-    cons05.resp.distribution = "Respiratory failure score under 2005 consensus definitions",
-    cons05.cns.distribution = "Central nervous system failure score under 2005 consensus definitions",
-    cons05.ren.distribution = "Renal failure score under 2005 consensus definitions",
-    cons05.hep.distribution = "Hepatic failure score under 2005 consensus definitions",
-    cons05.hem.distribution = "Hematological failure score under 2005 consensus definitions"
+    cons05.cvs.agg.distribution = "Cardiovascular failure score under 2005 consensus definitions",
+    cons05.resp.agg.distribution = "Respiratory failure score under 2005 consensus definitions",
+    cons05.cns.agg.distribution = "Central nervous system failure score under 2005 consensus definitions",
+    cons05.ren.agg.distribution = "Renal failure score under 2005 consensus definitions",
+    cons05.hep.agg.distribution = "Hepatic failure score under 2005 consensus definitions",
+    cons05.hem.agg.distribution = "Haematological failure score under 2005 consensus definitions",
+    podium.score.agg.stats = "PODIUM score"
   ),
   "Pathogen Information" = list(
-    clin.focus.distribution = "Primary clinical focus or reasons for medical intervention",
-    pathogen.grp.distribution = "Types of pathogens identified in blood cultures",
-    cvc.clabsi.distribution = "Incidence of central venous catheter-associated bloodstream infections"
+    focus.grp.distribution = "Primary clinical focus or reasons for medical intervention",
+    pathogen.grp.distribution = "Types of pathogens identified in blood cultures"
+    # cvc.clabsi.distribution = "Incidence of central venous catheter-associated bloodstream infections"  # no matching dataset variable
   )
 )
+
+# The following dataset variables have not yet been included in the annotations:
+#   genotype.stats
+#   gnomAD_AF.stats
+#   ACMG score.stats
+#   picu.delay.stats
+#   death.delay.stats
+#   pelod.cvs.agg.stats
+#   pelod.resp.agg.stats
+#   pelod.cns.agg.stats
+#   pelod.ren.agg.stats
+#   pelod.hem.agg.stats
+#   psofa.cvs.agg.stats
+#   psofa.resp.agg.stats
+#   psofa.cns.agg.stats
+#   psofa.ren.agg.stats
+#   psofa.hep.agg.stats
+#   psofa.hem.agg.stats
+#   podium.cns.agg.stats
+#   podium.resp.agg.stats
+#   podium.cvs.agg.stats
+#   podium.ren.agg.stats
+#   podium.hep.agg.stats
+#   podium.hem.agg.stats
+#   podium.coag.agg.stats
+#   podium.imm.agg.stats
+#   podium.n.od.agg.stats
+#   podium.score.agg.stats
+#   sample.id.distribution
+#   SYMBOL.distribution
+#   Variant GRCh38.distribution
+#   HGVSp.distribution
+#   HGVSc.distribution
+#   Consequence.distribution
+#   Inheritance.distribution
+#   study.site.distribution
+#   category.distribution
+#   picu.distribution
+#   picu.reason.distribution
+#   ccc.final.distribution
+#   cons05.mods.distribution
+#   any.comorb.distribution
+#   cahai.distribution
+#   group.distribution
 
 # sample.id.distribution = "Unique identifier for each episode, used to track blood samples",
 # ACMG_highest.distribution = "Highest classification of genetic variants per the ACMG standards",
@@ -559,98 +716,98 @@ writeLines(full_report_with_intro, text_path)
 
 
 # Fresh start - add clinical to main genetic report -----
-
-
-setwd("../ACMGuru_singlecase/")
-source("ACMGuru_singlecase_vcurrent.R")
-setwd("../cohort_summary_curated")
-
-# load clinical info
-samples <- read.csv("../../data/cohort_summary_curated/SAMPLE_LIST", header = F)
-
-samples$sample <- samples$V1
-samples <- samples |> dplyr::select(-V1)
-
-# Pheno ----
-# Create new column "cohort_pheno"
-samples$cohort_pheno <- samples$sample
-
-# Replace any value that starts with "setpt" with "0" in the "cohort_pheno" column
-samples$cohort_pheno[grep("^setpt", samples$sample)] <- "0"
-
-# Replace any value that does not start with "setpt" with "1" in the "cohort_pheno" column
-samples$cohort_pheno[!grepl("^setpt", samples$sample)] <- "1"
-
-# clean IDs
-samples <- separate(samples, sample, into = c("V1", "V2", "V3", "V4", "V5"))
-
-samples <- samples |>
-	mutate(V1 = ifelse(V1 == "raw", NA, V1))
-
-samples <- samples |>
-	unite(V1, V2, col = "sample.id", sep = "", na.rm = TRUE)
-
-samples <- samples |> filter(cohort_pheno == 1)
-
-# Clinical data ----
-df <- read.csv("../../data/cohort_summary_curated/sepsis_v2.csv")
-
-df <- df |> dplyr::select(
-	-exome_dataset_1,
-	-exome_dataset_1.1,  
-	-exome_dataset_2_path,
-	-exome_dataset_1_path,
-	-sqlpkey,
-	-personal.id)
-
-df$sample.id <- gsub("-", "", df$sample.id)
-df_v1 <- df
-
-# Clinical data - most updated?
-df <- read.csv("../../data/cohort_summary_curated/20200623_v3_clical_data_for_gwas/spss_gwas_episode.csv")
-df$sample.id <- gsub("-", "", df$sample.id)
-df_v2 <- df 
-
-# Merge all clinical data ----
-# This step meges two datasets and clean up columns which are duplicated as a result.
-# Merge the two clinical datasets to get best coverage.
-
-# Merge the data frames while keeping all rows from both
-df_v3 <- merge(df_v1, df_v2, by = "sample.id", all = TRUE)
-
-# List of columns that end with .x or .y
-columns_x <- grep("\\.x$", names(df_v3), value = TRUE)
-columns_y <- grep("\\.y$", names(df_v3), value = TRUE)
-
-# Remove .x or .y suffix and find common base names to identify matches
-base_names_x <- sub("\\.x$", "", columns_x)
-base_names_y <- sub("\\.y$", "", columns_y)
-
-# For each matched column name, choose which version (.x or .y) to keep
-for (base_name in intersect(base_names_x, base_names_y)) {
-	# Example logic: keep the .y version if not all are NA, otherwise keep .x
-	if (all(is.na(df_v3[[paste0(base_name, ".y")]]))) {
-		df_v3[[base_name]] <- df_v3[[paste0(base_name, ".x")]]
-	} else {
-		df_v3[[base_name]] <- df_v3[[paste0(base_name, ".y")]]
-	}
-	# Drop the now unnecessary .x and .y columns
-	df_v3[[paste0(base_name, ".x")]] <- NULL
-	df_v3[[paste0(base_name, ".y")]] <- NULL
-}
-
-# Remove the original .x and .y columns if they were not processed (not paired)
-remaining_x <- setdiff(columns_x, paste0(base_names_x[base_names_x %in% base_names_y], ".x"))
-remaining_y <- setdiff(columns_y, paste0(base_names_y[base_names_y %in% base_names_x], ".y"))
-df_v3[remaining_x] <- NULL
-df_v3[remaining_y] <- NULL
-
-# Merge clinical with main genetics tables ----
-# df <- merge(samples, df, by = "sample.id", all.x = TRUE)
-
-# missing_samples <- subset(df, is.na(study.site))
-# missing_sample_ids <- missing_samples$sample.id
-
-df_report_main_text_clinical <-
-	merge(df_report_main_text, df, by = "sample.id", all.x = TRUE)
-
+# 
+# 
+# setwd("../ACMGuru_singlecase/")
+# source("ACMGuru_singlecase_vcurrent.R")
+# setwd("../cohort_summary_curated")
+# 
+# # load clinical info
+# samples <- read.csv("../../data/cohort_summary_curated/SAMPLE_LIST", header = F)
+# 
+# samples$sample <- samples$V1
+# samples <- samples |> dplyr::select(-V1)
+# 
+# # Pheno ----
+# # Create new column "cohort_pheno"
+# samples$cohort_pheno <- samples$sample
+# 
+# # Replace any value that starts with "setpt" with "0" in the "cohort_pheno" column
+# samples$cohort_pheno[grep("^setpt", samples$sample)] <- "0"
+# 
+# # Replace any value that does not start with "setpt" with "1" in the "cohort_pheno" column
+# samples$cohort_pheno[!grepl("^setpt", samples$sample)] <- "1"
+# 
+# # clean IDs
+# samples <- separate(samples, sample, into = c("V1", "V2", "V3", "V4", "V5"))
+# 
+# samples <- samples |>
+# 	mutate(V1 = ifelse(V1 == "raw", NA, V1))
+# 
+# samples <- samples |>
+# 	unite(V1, V2, col = "sample.id", sep = "", na.rm = TRUE)
+# 
+# samples <- samples |> filter(cohort_pheno == 1)
+# 
+# # Clinical data ----
+# df <- read.csv("../../data/cohort_summary_curated/sepsis_v2.csv")
+# 
+# df <- df |> dplyr::select(
+# 	-exome_dataset_1,
+# 	-exome_dataset_1.1,  
+# 	-exome_dataset_2_path,
+# 	-exome_dataset_1_path,
+# 	-sqlpkey,
+# 	-personal.id)
+# 
+# df$sample.id <- gsub("-", "", df$sample.id)
+# df_v1 <- df
+# 
+# # Clinical data - most updated?
+# df <- read.csv("../../data/cohort_summary_curated/20200623_v3_clical_data_for_gwas/spss_gwas_episode.csv")
+# df$sample.id <- gsub("-", "", df$sample.id)
+# df_v2 <- df 
+# 
+# # Merge all clinical data ----
+# # This step meges two datasets and clean up columns which are duplicated as a result.
+# # Merge the two clinical datasets to get best coverage.
+# 
+# # Merge the data frames while keeping all rows from both
+# df_v3 <- merge(df_v1, df_v2, by = "sample.id", all = TRUE)
+# 
+# # List of columns that end with .x or .y
+# columns_x <- grep("\\.x$", names(df_v3), value = TRUE)
+# columns_y <- grep("\\.y$", names(df_v3), value = TRUE)
+# 
+# # Remove .x or .y suffix and find common base names to identify matches
+# base_names_x <- sub("\\.x$", "", columns_x)
+# base_names_y <- sub("\\.y$", "", columns_y)
+# 
+# # For each matched column name, choose which version (.x or .y) to keep
+# for (base_name in intersect(base_names_x, base_names_y)) {
+# 	# Example logic: keep the .y version if not all are NA, otherwise keep .x
+# 	if (all(is.na(df_v3[[paste0(base_name, ".y")]]))) {
+# 		df_v3[[base_name]] <- df_v3[[paste0(base_name, ".x")]]
+# 	} else {
+# 		df_v3[[base_name]] <- df_v3[[paste0(base_name, ".y")]]
+# 	}
+# 	# Drop the now unnecessary .x and .y columns
+# 	df_v3[[paste0(base_name, ".x")]] <- NULL
+# 	df_v3[[paste0(base_name, ".y")]] <- NULL
+# }
+# 
+# # Remove the original .x and .y columns if they were not processed (not paired)
+# remaining_x <- setdiff(columns_x, paste0(base_names_x[base_names_x %in% base_names_y], ".x"))
+# remaining_y <- setdiff(columns_y, paste0(base_names_y[base_names_y %in% base_names_x], ".y"))
+# df_v3[remaining_x] <- NULL
+# df_v3[remaining_y] <- NULL
+# 
+# # Merge clinical with main genetics tables ----
+# # df <- merge(samples, df, by = "sample.id", all.x = TRUE)
+# 
+# # missing_samples <- subset(df, is.na(study.site))
+# # missing_sample_ids <- missing_samples$sample.id
+# 
+# df_report_main_text_clinical <-
+# 	merge(df_report_main_text, df, by = "sample.id", all.x = TRUE)
+# 

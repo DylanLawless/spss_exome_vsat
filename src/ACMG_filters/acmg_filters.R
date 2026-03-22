@@ -405,7 +405,7 @@ Moderate_pathogenic_GE_threshold <- 4
 Supporting_pathogenic_GE_threshold <- 10
 
 threshold_results <- df |>
-  summarize(
+  dplyr::summarize(
     total = n(),
     strong_threshold = Supporting_pathogenic_GE_threshold,
     strong_pass = sum(Strong_pathogenic_GE >= Strong_pathogenic_GE_threshold, na.rm = TRUE),
@@ -573,6 +573,21 @@ df$ACMG_count <- rowSums(!is.na(df[, acmg_labels ]))
 df <- df %>% dplyr::select(ACMG_count, everything())
 # df$ACMG_count[df$ACMG_count == 0] <- NA
 
+# Added on 20260205 
+# collect all positive ACMG criteria per variant ----
+df$ACMG_all_positive <- apply(
+  df[, acmg_labels, drop = FALSE],
+  1,
+  function(x) {
+    cols <- names(x)[!is.na(x)]
+    if (length(cols) == 0) NA_character_
+    else paste(cols, collapse = " ")
+  }
+)
+df <- df %>% dplyr::select(ACMG_all_positive, everything())
+
+
+
 p.criteria_count_each_gene <- df |> 
   filter(ACMG_count > 1) |>
   ggplot(aes(y = ACMG_count, x = SYMBOL)) +
@@ -600,9 +615,21 @@ p.criteria_gene_total <- df %>%
   theme_minimal() +
   xlab("No. ACMG criteria (P) variants per gene") +
   ylab("Number of genes") +
-  geom_text(stat='count', aes(label=..count.., y=..count..+1), color = "black") + 
+  geom_text_repel(stat='count', color = "black", 
+                  alpha = 0.8,
+                  box.padding = 0.5, max.overlaps = Inf,
+                  # padding = unit(0.5, "lines"),
+                  # nudge_y = 0.05,  
+                  nudge_x = .0,
+                  nudge_y = .1,
+                  direction = "y",
+                  aes(label= ..count..)
+  ) +
+  
+  scale_y_continuous(expand = expansion(mult = c(0, 0.1))) +
   guides(fill=FALSE) +
   scale_fill_scico(palette = 'acton', direction = 1) # batlowK, acton, lajolla, lapaz, turku
+
 p.criteria_gene_total 
 ggsave(paste("../../images/", output_directory ,file_suffix, "criteria_gene_total.pdf", sep = "") ,plot = p.criteria_gene_total )
 
@@ -619,9 +646,22 @@ p.variants_per_criteria <- df |>
   xlab("No. ACMG criteria\nassigned (P)") +
   ylab("No. variants") +
   theme_minimal() +
-  geom_text(stat='count', aes(label=..count.., y=..count..+20), color = "black") + 
+  # geom_text(stat='count', aes(label=..count.., y=..count..+20), color = "black") + 
+  geom_text_repel(stat='count', color = "black", 
+                  alpha = 0.8,
+                  box.padding = 0.5, max.overlaps = Inf,
+                  # padding = unit(0.5, "lines"),
+                  # nudge_y = 0.05,  
+                  nudge_x = .0,
+                  nudge_y = .1,
+                  direction = "y",
+                  aes(label= ..count..)
+  ) +
+  
+  scale_y_continuous(expand = expansion(mult = c(0, 0.1))) +
   guides(fill=FALSE) +
   scale_fill_scico(palette = 'acton', direction = 1) # batlowK, acton, lajolla, lapaz, turku
+
 p.variants_per_criteria
 ggsave(paste("../../images/", output_directory ,file_suffix, "variants_per_criteria.pdf", sep = "") ,plot = p.variants_per_criteria , width = 9, height = 5)
 
@@ -633,7 +673,19 @@ p.criteria_per_sample <- df %>%
   geom_histogram(binwidth = 1, color = "black") +
   labs(x = "No. ACMG criteria\nassigned (P)", y = "No. samples") +
   theme_minimal() +
-  geom_text(stat='count', aes(label=..count.., y=..count..+10), color = "black") + 
+  # geom_text(stat='count', aes(label=..count.., y=..count..+10), color = "black") + 
+  geom_text_repel(stat='count', color = "black", 
+                  alpha = 0.8,
+                  box.padding = 0.5, max.overlaps = Inf,
+                  # padding = unit(0.5, "lines"),
+                  # nudge_y = 0.05,  
+                  nudge_x = .0,
+                  nudge_y = .1,
+                  direction = "y",
+                  aes(label= ..count..)
+  ) +
+  
+  scale_y_continuous(expand = expansion(mult = c(0, 0.1))) +
   guides(fill=FALSE) +
   scale_fill_scico(palette = 'acton', direction = 1) # batlowK, acton, lajolla, lapaz, turku
 p.criteria_per_sample
@@ -783,3 +835,4 @@ df <- df |> dplyr::select(ACMG_total_score, everything())
 # GERP.._NR
 # GERP.._RS_rankscore
 # GERP.._RS
+

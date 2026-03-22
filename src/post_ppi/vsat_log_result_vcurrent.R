@@ -29,12 +29,26 @@ skat_log <- merge(skat_log_read_genes, skat_log_read, by = "MCL_ID")
 skat_log <- skat_log |> select(MCL_ID, p_val, gene_count, var_count, Genes, everything())
 skat_log$MCL_ID <- as.numeric(skat_log$MCL_ID)
 
-# clean up
-rm(list = setdiff(ls(), c("skat_log", "file_suffix", "version")))
 
 skat_log <- skat_log |>
   filter(gene_count > 5) |> # v4
   filter(var_count < 100) #v4
+
+
+# save 
+
+skat_log
+
+
+
+
+
+# save filtered versions
+write.csv(skat_log, paste0(paste0(file, "_qc.txt")), row.names = FALSE)
+
+# clean up
+rm(list = setdiff(ls(), c("skat_log", "file_suffix", "version")))
+
 
 # psig threshold
 MCL_ID_count <- unique(skat_log$MCL_ID)
@@ -295,4 +309,7 @@ ggplot(results, aes(x = -log10(p.value), y = -log10(p.value))) +
 results |>
   ggplot(aes(x = direction_of_effect)) +
   geom_bar(stat = "count")
+
+
+
 

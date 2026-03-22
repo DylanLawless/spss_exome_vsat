@@ -35,61 +35,66 @@ df_report_main_text <- readRDS(paste0("../../data/ACMGuru_post_ppi/df_report_mai
 # load single case report
 # df_report_main_text <- readRDS(file="../../data/singlecase/df_report_main_text.Rds")
 
-# load clinical info
-samples <- read.csv("../../data/cohort_summary_curated/SAMPLE_LIST", header = F)
-samples$sample <- samples$V1
-samples <- samples |> dplyr::select(-V1)
+# # load clinical info
+# samples <- read.csv("../../data/cohort_summary_curated/SAMPLE_LIST", header = F)
+# samples$sample <- samples$V1
+# samples <- samples |> dplyr::select(-V1)
+# 
+# # Pheno ----
+# # Create new column "cohort_pheno"
+# samples$cohort_pheno <- samples$sample
+# 
+# # setpt denotes the cohort cohort ids
+# # Replace any value that starts with "setpt" with "0" in the "cohort_pheno" column
+# samples$cohort_pheno[grep("^setpt", samples$sample)] <- "0"
+# 
+# # Replace any value that does not start with "setpt" with "1" in the "cohort_pheno" column
+# samples$cohort_pheno[!grepl("^setpt", samples$sample)] <- "1"
+# 
+# # clean IDs
+# samples <- separate(samples, sample, into = c("V1", "V2", "V3", "V4", "V5"))
+# 
+# samples <- samples |>
+#   mutate(V1 = ifelse(V1 == "raw", NA, V1))
+#   
+# samples <- samples |>
+#   unite(V1, V2, col = "sample.id", sep = "", na.rm = TRUE)
+# 
+# samples <- samples |> filter(cohort_pheno == 1)
+# 
+# # Clinical data
+# df <- read.csv("../../data/cohort_summary_curated/sepsis_v2.csv")
+# names(df)
+# df <- df |> dplyr::select(
+#   -exome_dataset_1,
+#   -exome_dataset_1.1,  
+#   -exome_dataset_2_path,
+#   -exome_dataset_1_path,
+#   -sqlpkey,
+#   -personal.id)
+# 
+# df$sample.id <- gsub("-", "", df$sample.id)
+# 
+# df <- merge(samples, df, by = "sample.id", all.x = TRUE)
+# 
+# missing_samples <- subset(df, is.na(study.site))
+# missing_sample_ids <- missing_samples$sample.id
+# 
+# # save for calling in other scripts ----
+# # df_cohort_clin_feat <-  df
+# saveRDS(df, file = "../../data/cohort_summary_curated/cohort_summary_curated_r_df.Rds")
+# 
+# # text summary description Hmisc ----
+# df <- df |> dplyr::select(
+#   # -sample.id,
+#   -V3,
+#   -V4,
+#   -V5)
 
-# Pheno ----
-# Create new column "cohort_pheno"
-samples$cohort_pheno <- samples$sample
 
-# setpt denotes the cohort cohort ids
-# Replace any value that starts with "setpt" with "0" in the "cohort_pheno" column
-samples$cohort_pheno[grep("^setpt", samples$sample)] <- "0"
 
-# Replace any value that does not start with "setpt" with "1" in the "cohort_pheno" column
-samples$cohort_pheno[!grepl("^setpt", samples$sample)] <- "1"
-
-# clean IDs
-samples <- separate(samples, sample, into = c("V1", "V2", "V3", "V4", "V5"))
-
-samples <- samples |>
-  mutate(V1 = ifelse(V1 == "raw", NA, V1))
-  
-samples <- samples |>
-  unite(V1, V2, col = "sample.id", sep = "", na.rm = TRUE)
-
-samples <- samples |> filter(cohort_pheno == 1)
-
-# Clinical data
-df <- read.csv("../../data/cohort_summary_curated/sepsis_v2.csv")
-names(df)
-df <- df |> dplyr::select(
-  -exome_dataset_1,
-  -exome_dataset_1.1,  
-  -exome_dataset_2_path,
-  -exome_dataset_1_path,
-  -sqlpkey,
-  -personal.id)
-
-df$sample.id <- gsub("-", "", df$sample.id)
-
-df <- merge(samples, df, by = "sample.id", all.x = TRUE)
-
-missing_samples <- subset(df, is.na(study.site))
-missing_sample_ids <- missing_samples$sample.id
-
-# save for calling in other scripts ----
-# df_cohort_clin_feat <-  df
-saveRDS(df, file = "../../data/cohort_summary_curated/cohort_summary_curated_r_df.Rds")
-
-# text summary description Hmisc ----
-df <- df |> dplyr::select(
-  # -sample.id,
-  -V3,
-  -V4,
-  -V5)
+# updated clinical data ----
+df <- readRDS(file = "../../data/cohort_summary_curated/cohort_summary_curated_r_df.Rds")
 
 df <- merge(df_report_sample_vsat, df, by="sample.id", all=T)
 
@@ -101,10 +106,50 @@ df$group <- ifelse(is.na(df$group), "not_contributer", df$group)
 #   dplyr::select(which(sapply(df, is.numeric))) |>  # Select numeric columns
 #   gather(group, key = "variable", value = "value")  # Convert from wide to long format
 
+df <- df |> dplyr::select(-age_mo)
+
 df_long <- df |>
   dplyr::select(group, which(sapply(df, is.numeric))) |>  # Select numeric columns
   gather(2:23, key = "variable", value = "value")  # Convert from wide to long format
 
+# clean names ----
+df_long <- df_long %>%
+  mutate(variable = case_when(
+    variable == "age_mo"           ~ "Age in months",
+    variable == "episode.nr"       ~ "Episode Number",
+    variable == "picu.delay"       ~ "PICU Delay",
+    variable == "picu.los"         ~ "PICU Length of Stay",
+    variable == "picu.los.bc"      ~ "PICU Length of Stay\nAfter Blood Culture)",
+    variable == "death.delay"      ~ "Death Delay",
+    variable == "cons05.score.agg" ~ "Cons05 Aggregated\nnumber of organ failures",
+    variable == "pelod.score.agg"  ~ "PELOD Score",
+    variable == "pelod.cvs.agg"    ~ "PELOD Cardiovascular",
+    variable == "pelod.resp.agg"   ~ "PELOD Respiratory",
+    variable == "pelod.cns.agg"    ~ "PELOD CNS",
+    variable == "pelod.ren.agg"    ~ "PELOD Renal",
+    variable == "pelod.hem.agg"    ~ "PELOD Haematological",
+    variable == "psofa.score.agg"  ~ "pSOFA Score",
+    variable == "psofa.cvs.agg"    ~ "pSOFA Cardiovascular",
+    variable == "psofa.resp.agg"   ~ "pSOFA Respiratory",
+    variable == "psofa.cns.agg"    ~ "pSOFA CNS",
+    variable == "psofa.ren.agg"    ~ "pSOFA Renal",
+    variable == "psofa.hep.agg"    ~ "pSOFA Hepatic",
+    variable == "psofa.hem.agg"    ~ "pSOFA Haematological",
+    variable == "age.at.bc.days"   ~ "Age at Blood Culture (days)",
+    variable == "hosp.los.bc"      ~ "Hospital Length of Stay\nAfter Blood Culture",
+    variable == "hosp.delay"       ~ "Hospital Delay",
+    variable == "podium.cns.agg"   ~ "PODIUM CNS",
+    variable == "podium.resp.agg"  ~ "PODIUM Respiratory",
+    variable == "podium.cvs.agg"   ~ "PODIUM Cardiovascular",
+    variable == "podium.ren.agg"   ~ "PODIUM Renal",
+    variable == "podium.hep.agg"   ~ "PODIUM Hepatic",
+    variable == "podium.hem.agg"   ~ "PODIUM Haematological",
+    variable == "podium.coag.agg"  ~ "PODIUM Coagulation",
+    variable == "podium.imm.agg"   ~ "PODIUM Immune",
+    variable == "podium.n.od.agg"  ~ "PODIUM Neurological/Other",
+    variable == "podium.score.agg" ~ "PODIUM Score",
+    TRUE ~ variable
+  ))
 
 # Define a helper function to get the next value in a vector
 next_in_list <- function(lst, value) {
@@ -164,7 +209,9 @@ p_combined1 <-
     ggarrange(plotlist = plot_list, nrow = nrow, ncol = ncol),
     left = textGrob("No. of patients", rot = 90, vjust = 1),
     bottom = textGrob("Value")
-  )
+  )  +
+  theme(plot.subtitle = element_text(size = 8))
+
 p_combined1
 
 # Save combined plot to PDF
@@ -177,9 +224,13 @@ ggsave("../../images/cohort_summary_curated/cohort_plots_post_ppi_continuous.pdf
 #   dplyr::select(which(sapply(df, is.character))) |>  # Select character columns
 #   gather(key = "variable", value = "value")  # Convert from wide to long format
 
+dim(df)
+
+
 df_long <- df |>
   dplyr::select(group, which(sapply(df, is.character))) |>  # Select numeric columns
-  gather(3:31, key = "variable", value = "value")  # Convert from wide to long format
+  # gather(3:31, key = "variable", value = "value")  # Convert from wide to long format
+  gather(3:23, key = "variable", value = "value")  # Convert from wide to long format
 
 # Filter out date variables
 df_long <- df_long |> 
@@ -207,6 +258,32 @@ df_long <- df_long |>
 
 # drop pheno, because all cases
 df_long <- df_long |> dplyr::filter(!variable == "cohort_pheno")
+
+df_long <- df_long %>%
+  mutate(variable = case_when(
+    variable == "age.grp"         ~ "Age Group",
+    variable == "sex"             ~ "Sex",
+    variable == "focus.grp"       ~ "Clinical Focus Group",
+    variable == "study.site"      ~ "Study Site",
+    variable == "category"        ~ "Category",
+    variable == "picu"            ~ "PICU",
+    variable == "picu.reason"     ~ "PICU Reason",
+    variable == "picu.los3"       ~ "PICU Length\nof Stay (≥3 days)",
+    variable == "death.picu.los3" ~ "Death or\nextended PICU stay",
+    variable == "ccc.final"       ~ "Chronic condition\nclassification system\nVersion 2",
+    variable == "pathogen.grp"    ~ "Pathogen Group",
+    variable == "cons05.mods"     ~ "Cons05 MODS",
+    variable == "cons05.cvs.agg"   ~ "Cons05 Cardiovascular",
+    variable == "cons05.resp.agg"  ~ "Cons05 Respiratory",
+    variable == "cons05.cns.agg"   ~ "Cons05 CNS",
+    variable == "cons05.ren.agg"   ~ "Cons05 Renal",
+    variable == "cons05.hep.agg"   ~ "Cons05 Hepatic",
+    variable == "cons05.hem.agg"   ~ "Cons05 Haematological",
+    variable == "any.comorb"      ~ "Any Comorbidity",
+    variable == "cahai"           ~ "Community or \nHospital-acquired Sepsis",
+    variable == "death.30.bc"     ~ "Death within 30 Days\nafter Blood Culture",
+    TRUE ~ variable
+  ))
 
 # Define a function to create a bar plot
 create_bar <- function(data, variable_name) {
@@ -244,7 +321,8 @@ p_combined2 <-
     ggarrange(plotlist = plot_list, nrow = nrow, ncol = ncol),
     left = textGrob("No. of patients", rot = 90, vjust = 1),
     bottom = textGrob("Category")
-  )
+  )  +
+  theme(plot.subtitle = element_text(size = 8))
 p_combined2
 
 # Save combined plot to PDF
@@ -323,7 +401,7 @@ library(dplyr)
 
 # Extract unique SYMBOL and pathway_id pairs
 df_unique_symbols <- df_report_main_text %>%
-  select(SYMBOL, pathway_id) %>%
+  dplyr::select(SYMBOL, pathway_id) %>%
   unique()
 
 # Group by pathway_id, summarise symbols, and print each group
@@ -381,7 +459,7 @@ count_variant_counts_by_position
 # Calculate the number of unique variants
 count_unique_variants <- df_report_main_text %>%
   distinct(`Variant GRCh38`, .keep_all = TRUE) %>%
-  count(genotype, name = "unique_variants")
+  dplyr::count(genotype, name = "unique_variants")
 
 count_unique_variants
 
@@ -399,7 +477,7 @@ count_unique_with_inheritance <- df_report_main_text %>%
   summarise(count = n(), .groups = 'drop') %>%
   unique() %>%
   # filter(count == 1) %>%
-  count(Inheritance)
+  dplyr::count(Inheritance)
 
 # Print the results
 print(count_unique_with_inheritance)
@@ -410,7 +488,7 @@ count_variant_counts_by_impact <- df_report_main_text %>%
   distinct(`Variant GRCh38`, .keep_all = TRUE) %>%
   summarise(count = n(), .groups = 'drop') %>%
   # filter(count == 1)%>%
-  count(IMPACT)
+  dplyr::count(IMPACT)
 
 print(count_variant_counts_by_impact)
 
@@ -420,13 +498,13 @@ count_variant_counts_by_impact_genotype <- df_report_main_text %>%
   distinct(`Variant GRCh38`, .keep_all = TRUE) %>%
   summarise(count = n(), .groups = 'drop') %>%
   filter(genotype == 2)%>%
-  count(IMPACT)
+  dplyr::count(IMPACT)
 
 print(count_variant_counts_by_impact_genotype)
 
 count_variant_iuis <- df_report_main_text %>%
   filter(! Inheritance == "NA") %>%
-  select(SYMBOL, IMPACT,  HGVSp, HGVSc, genotype)
+  dplyr::select(SYMBOL, IMPACT,  HGVSp, HGVSc, genotype)
 
 
 # save variant counts to file text ----
@@ -502,7 +580,9 @@ close(file_conn)
 
 # kable latex tables ----
 # Get the genetic and clinical data merged, equivalent to the single case cohort summary
-df_cases <- df |> dplyr::filter(cohort_pheno == 1) |> dplyr::filter(group == "VSAT_contributer")
+df_cases <- df |> 
+  # dplyr::filter(cohort_pheno == 1) |> 
+  dplyr::filter(group == "VSAT_contributer")
 df_cases_genetic <- merge(df_report_main_text, df, by = "sample.id", all = TRUE)
 
 ACMG_total_score_cutoff_pathogenic <- 1
@@ -522,17 +602,10 @@ df_summaries |>
 
 df_summaries |> 
   ungroup() |>
-  group_by(ACMG_total_score, Consequence, IMPACT) |>
+  group_by("ACMG score", Consequence, IMPACT) |>
   summarise(unique_variants = n()) |>
-  arrange(desc(ACMG_total_score), IMPACT, unique_variants) |>
+  arrange(desc("ACMG score"), IMPACT, unique_variants) |>
   kable("latex", booktabs = TRUE)
-
-
-
-
-
-
-
 
 
 # If you need to match the specific output in your text, consider
@@ -545,7 +618,7 @@ df_summaries |>
 # write.csv(df_summaries,  paste0("../../data/singlecase/ACMGuru_singlecase_df_report_cohort_data.csv"))
 
 
-df_dedup <- df_summaries |> dplyr::select(sample.id, study.site: psofa.hem) |> unique()
+df_dedup <- df_summaries |> dplyr::select(sample.id, study.site: podium.score.agg) |> unique()
 # write.csv(df_dedup,  paste0("../../data/singlecase/ACMGuru_singlecase_df_report_dedup.csv"))
 
 # df_report_main_text |>
@@ -595,47 +668,47 @@ cohort_features <- summarize_data(df_summaries)
 
 print(cohort_features)
 
-# Define variable descriptions based on provided definitions
-# Define variable descriptions and group them by category
-variable_descriptions <- list(
-  "Demographic Information" = list(
-    episode.nr.stats = "Number of previous sepsis episodes registered in the same child",
-    age.days.stats = "Patient age at blood culture sampling in days",
-    gender.distribution = "Gender distribution of the cohort",
-    age.category2.distribution = "Age categories based on the time of blood culture sampling",
-    ethnicity.distribution = "Ethnic background of the cohort"
-  ),
-  "Hospitalization Data" = list(
-    hosp.dur.stats = "Total length of hospital stay in days",
-    hosp.dur.post.bc.stats = "Hospital stay length after blood culture sampling in days",
-    picu.dur.stats = "Total length of stay in the Pediatric Intensive Care Unit (PICU) in days",
-    picu.dur.post.bc.stats = "PICU stay length after blood culture sampling in days",
-    hospital.adm.delay.stats = "Delay in hospital admission from time of initial presentation in days"
-    # hosp.dis.distribution = "Dates of hospital discharges",
-    # picu.dis.distribution = "Dates of PICU discharges"
-  ),
-  "Clinical Outcomes" = list(
-    cons05.score.stats = "Total number of organ failures as defined by the 2005 consensus",
-    pelod.score.stats = "Total number of organ failures as defined by the Pediatric Logistic Organ Dysfunction Score (PELOD-2)",
-    psofa.score.stats = "Total number of organ failures as defined by the 2017 pSOFA",
-    outcome.death.distribution = "Mortality outcomes within 30 days post-admission",
-    outcome.picu.los.distribution = "Impact of PICU length of stay on outcomes",
-    outcome.death.picu.distribution = "Mortality outcomes specifically within the PICU settings"
-  ),
-  "Organ Failures and Sepsis Details" = list(
-    cons05.cvs.distribution  = "Cardiovascular failure score under 2005 consensus definitions",
-    cons05.resp.distribution = "Respiratory failure score under 2005 consensus definitions",
-    cons05.cns.distribution = "Central nervous system failure score under 2005 consensus definitions",
-    cons05.ren.distribution = "Renal failure score under 2005 consensus definitions",
-    cons05.hep.distribution = "Hepatic failure score under 2005 consensus definitions",
-    cons05.hem.distribution = "Hematological failure score under 2005 consensus definitions"
-  ),
-  "Pathogen Information" = list(
-    clin.focus.distribution = "Primary clinical focus or reasons for medical intervention",
-    pathogen.grp.distribution = "Types of pathogens identified in blood cultures",
-    cvc.clabsi.distribution = "Incidence of central venous catheter-associated bloodstream infections"
-  )
-)
+# # Define variable descriptions based on provided definitions
+# # Define variable descriptions and group them by category
+# variable_descriptions <- list(
+#   "Demographic Information" = list(
+#     episode.nr.stats = "Number of previous sepsis episodes registered in the same child",
+#     age.days.stats = "Patient age at blood culture sampling in days",
+#     gender.distribution = "Gender distribution of the cohort",
+#     age.category2.distribution = "Age categories based on the time of blood culture sampling",
+#     ethnicity.distribution = "Ethnic background of the cohort"
+#   ),
+#   "Hospitalization Data" = list(
+#     hosp.dur.stats = "Total length of hospital stay in days",
+#     hosp.dur.post.bc.stats = "Hospital stay length after blood culture sampling in days",
+#     picu.dur.stats = "Total length of stay in the Pediatric Intensive Care Unit (PICU) in days",
+#     picu.dur.post.bc.stats = "PICU stay length after blood culture sampling in days",
+#     hospital.adm.delay.stats = "Delay in hospital admission from time of initial presentation in days"
+#     # hosp.dis.distribution = "Dates of hospital discharges",
+#     # picu.dis.distribution = "Dates of PICU discharges"
+#   ),
+#   "Clinical Outcomes" = list(
+#     cons05.score.stats = "Total number of organ failures as defined by the 2005 consensus",
+#     pelod.score.stats = "Total number of organ failures as defined by the Pediatric Logistic Organ Dysfunction Score (PELOD-2)",
+#     psofa.score.stats = "Total number of organ failures as defined by the 2017 pSOFA",
+#     outcome.death.distribution = "Mortality outcomes within 30 days post-admission",
+#     outcome.picu.los.distribution = "Impact of PICU length of stay on outcomes",
+#     outcome.death.picu.distribution = "Mortality outcomes specifically within the PICU settings"
+#   ),
+#   "Organ Failures and Sepsis Details" = list(
+#     cons05.cvs.distribution  = "Cardiovascular failure score under 2005 consensus definitions",
+#     cons05.resp.distribution = "Respiratory failure score under 2005 consensus definitions",
+#     cons05.cns.distribution = "Central nervous system failure score under 2005 consensus definitions",
+#     cons05.ren.distribution = "Renal failure score under 2005 consensus definitions",
+#     cons05.hep.distribution = "Hepatic failure score under 2005 consensus definitions",
+#     cons05.hem.distribution = "Hematological failure score under 2005 consensus definitions"
+#   ),
+#   "Pathogen Information" = list(
+#     clin.focus.distribution = "Primary clinical focus or reasons for medical intervention",
+#     pathogen.grp.distribution = "Types of pathogens identified in blood cultures",
+#     cvc.clabsi.distribution = "Incidence of central venous catheter-associated bloodstream infections"
+#   )
+# )
 
 # sample.id.distribution = "Unique identifier for each episode, used to track blood samples",
 # ACMG_highest.distribution = "Highest classification of genetic variants per the ACMG standards",
@@ -654,6 +727,89 @@ variable_descriptions <- list(
 # death.date.distribution = "Dates of death within the cohort",
 # hosp.dis.distribution = "Dates of hospital discharges",
 # picu.dis.distribution = "Dates of PICU discharges",
+
+variable_descriptions <- list(
+  "Demographic Information" = list(
+    episode.nr.stats = "Number of previous sepsis episodes registered in the same child",
+    age.at.bc.days.stats = "Patient age at blood culture sampling in days",
+    sex.distribution = "Gender distribution of the cohort",
+    age.grp.distribution = "Age categories based on the time of blood culture sampling"
+    # ethnicity.distribution = "Ethnic background of the cohort"  # no matching dataset variable
+  ),
+  "Hospitalisation Data" = list(
+    # hosp.dur.stats = "Total length of hospital stay in days",  # no matching dataset variable
+    hosp.los.bc.stats = "Hospital stay length after blood culture sampling in days",
+    picu.los.stats = "Total length of stay in the PICU in days",
+    picu.los.bc.stats = "PICU stay length after blood culture sampling in days",
+    hosp.delay.stats = "Delay in hospital admission from time of initial presentation in days"
+  ),
+  "Clinical Outcomes" = list(
+    cons05.score.agg.stats = "Total number of organ failures as defined by the 2005 consensus",
+    pelod.score.agg.stats = "Total number of organ failures as defined by the PELOD-2",
+    psofa.score.agg.stats = "Total number of organ failures as defined by the 2017 pSOFA",
+    death.30.bc.distribution = "Mortality outcomes within 30 days post-admission",
+    picu.los3.distribution = "Impact of PICU length of stay on outcomes"
+    # outcome.death.picu.distribution = "Mortality outcomes specifically within the PICU settings"  # no matching dataset variable
+  ),
+  "Organ Failures and Sepsis Details" = list(
+    cons05.cvs.agg.distribution = "Cardiovascular failure score under 2005 consensus definitions",
+    cons05.resp.agg.distribution = "Respiratory failure score under 2005 consensus definitions",
+    cons05.cns.agg.distribution = "Central nervous system failure score under 2005 consensus definitions",
+    cons05.ren.agg.distribution = "Renal failure score under 2005 consensus definitions",
+    cons05.hep.agg.distribution = "Hepatic failure score under 2005 consensus definitions",
+    cons05.hem.agg.distribution = "Haematological failure score under 2005 consensus definitions",
+    podium.score.agg.stats = "PODIUM score"
+  ),
+  "Pathogen Information" = list(
+    focus.grp.distribution = "Primary clinical focus or reasons for medical intervention",
+    pathogen.grp.distribution = "Types of pathogens identified in blood cultures"
+    # cvc.clabsi.distribution = "Incidence of central venous catheter-associated bloodstream infections"  # no matching dataset variable
+  )
+)
+
+# The following dataset variables have not yet been included in the annotations:
+#   genotype.stats
+#   gnomAD_AF.stats
+#   ACMG score.stats
+#   picu.delay.stats
+#   death.delay.stats
+#   pelod.cvs.agg.stats
+#   pelod.resp.agg.stats
+#   pelod.cns.agg.stats
+#   pelod.ren.agg.stats
+#   pelod.hem.agg.stats
+#   psofa.cvs.agg.stats
+#   psofa.resp.agg.stats
+#   psofa.cns.agg.stats
+#   psofa.ren.agg.stats
+#   psofa.hep.agg.stats
+#   psofa.hem.agg.stats
+#   podium.cns.agg.stats
+#   podium.resp.agg.stats
+#   podium.cvs.agg.stats
+#   podium.ren.agg.stats
+#   podium.hep.agg.stats
+#   podium.hem.agg.stats
+#   podium.coag.agg.stats
+#   podium.imm.agg.stats
+#   podium.n.od.agg.stats
+#   podium.score.agg.stats
+#   sample.id.distribution
+#   SYMBOL.distribution
+#   Variant GRCh38.distribution
+#   HGVSp.distribution
+#   HGVSc.distribution
+#   Consequence.distribution
+#   Inheritance.distribution
+#   study.site.distribution
+#   category.distribution
+#   picu.distribution
+#   picu.reason.distribution
+#   ccc.final.distribution
+#   cons05.mods.distribution
+#   any.comorb.distribution
+#   cahai.distribution
+#   group.distribution
 
 
 # Function to produce the full clinical report with subheadings and missing data check
@@ -717,3 +873,4 @@ text_path
 
 # Save the report as a text file
 writeLines(full_report_with_intro, text_path)
+

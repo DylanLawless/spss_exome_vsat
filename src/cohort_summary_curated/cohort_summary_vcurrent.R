@@ -34,18 +34,49 @@ samples <- samples |>
   unite(V1, V2, col = "sample.id", sep = "", na.rm = TRUE)
 
 samples <- samples |> filter(cohort_pheno == 1)
+samples <- samples |> dplyr::select(sample.id, cohort_pheno)
 
 # Clinical data
-df <- read.csv("../../data/cohort_summary_curated/sepsis_v2.csv")
+df_v2 <- read.csv("../../data/cohort_summary_curated/sepsis_v2.csv")
+df <- read.csv(file = "../../data/cohort_summary_curated/20250224_spss_rarevar_data.tsv", sep = "\t", header = TRUE)
 
+# Columns of interest ----
+df_name <- names(df)
+df_v2_name <- names(df_v2)
+df_name_intersect <- intersect(df_name, df_v2_name)
 
+# Finding partial matches for each column name in df_v2 within df
+df_name_intersect <- sapply(df_v2_name, function(v2_name) {
+  matches <- grep(v2_name, df_name, value = TRUE)
+  if (length(matches) > 0) return(matches)
+  NULL
+})
+
+df_name_intersect <- unique(unlist(df_name_intersect))
+
+additional_columns <- c("age.grp", "sex", "episode.nr", "any.comorb", "focus.grp", 
+                        "cahai", "death.30.bc", "age.at.bc.days", "hosp.los.bc", 
+                        "picu.los.bc", "hosp.delay", "death.delay", "cons05.score.agg", 
+                        "cons05.mods")
+
+podium_columns <- grep("podium.*", df_name, value = TRUE)
+
+all_columns <- c(df_name_intersect, additional_columns, podium_columns)
+all_columns <- unique(all_columns)
+df_selected <- df[, all_columns]
+df_selected <- df_selected[, !grepl("\\.d$|\\.dt$", names(df_selected))]
+df_selected <- df_selected[, !grepl("ethnicity", names(df_selected))]
+df_selected <- df_selected[, !grepl("picu.reason.sp", names(df_selected))]
+df_selected <- df_selected[, !grepl("picu.sepsis", names(df_selected))]
+df_selected[df_selected == ""] <- NA
+df <- df_selected
 
 names(df)
 df <- df |>dplyr::select(
-  -exome_dataset_1,
-  -exome_dataset_1.1,  
-  -exome_dataset_2_path,
-  -exome_dataset_1_path,
+  # -exome_dataset_1,
+  # -exome_dataset_1.1,  
+  # -exome_dataset_2_path,
+  # -exome_dataset_1_path,
   -sqlpkey,
   -personal.id)
 
@@ -54,15 +85,22 @@ df$sample.id <- gsub("-", "", df$sample.id)
 hold <- df
 
 # Get a validation from original source ----
-df_val <- df |> select(sample.id, sample_id)
+df_val <- df |> dplyr::select(sample.id, sample_id)
 write.table(df_val, file = "../../data/cohort_summary_curated/validate_combined_data_clinical_summary.tsv", quote = FALSE, row.names = FALSE, sep = "\t")
-df <- df |> select(-sample_id)
+df <- df |> dplyr::select(-sample_id)
 
-# merge ----
-df <- merge(samples, df, by = "sample.id", all.x = TRUE)
+df_val2 <- samples |> dplyr::select(sample.id)
+df_val2$sample_id <- gsub("([A-Za-z]+)([0-9]+)", "\\1-\\2", df_val2$sample.id) # add the hyphen format
+write.table(df_val2, file = "../../data/cohort_summary_curated/validate_clinical_wes_smaples.tsv", quote = FALSE, row.names = FALSE, sep = "\t")
 
-missing_samples <- subset(df, is.na(study.site))
+# check missing merge ----
+df_miss <- merge(samples, df, by = "sample.id", all.x = TRUE)
+missing_samples <- subset(df_miss, is.na(study.site))
 missing_sample_ids <- missing_samples$sample.id
+
+# PA cases ----
+df_pa <- read.csv(file = "../../data/cohort_summary_curated/20250303_asgari_cases_pa.tsv", sep = "\t", header = TRUE)
+df <- bind_rows(df_pa, df)
 
 # save for calling in other scripts ----
 # df_cohort_clin_feat <-  df
@@ -70,10 +108,8 @@ saveRDS(df, file = "../../data/cohort_summary_curated/cohort_summary_curated_r_d
 
 # text summary description Hmisc ----
 df <- df |>dplyr::select(
-  -sample.id,
-  -V3,
-  -V4,
-  -V5)
+  -sample.id
+  )
 
 # Use the describe function
 df_desc <- describe(df)
@@ -90,6 +126,47 @@ df_desc
 df_long <- df |>
  dplyr::select(which(sapply(df, is.numeric))) |>  #dplyr::select numeric columns
   gather(key = "variable", value = "value")  # Convert from wide to long format
+
+
+# clean names ----
+df_long <- df_long %>%
+  mutate(variable = case_when(
+    variable == "age_mo"           ~ "Age in months",
+    variable == "episode.nr"       ~ "Episode Number",
+    variable == "picu.delay"       ~ "PICU Delay",
+    variable == "picu.los"         ~ "PICU Length of Stay",
+    variable == "picu.los.bc"      ~ "PICU Length of Stay\nAfter Blood Culture)",
+    variable == "death.delay"      ~ "Death Delay",
+    variable == "cons05.score.agg" ~ "Cons05 Aggregated number\nof organ failures",
+    variable == "pelod.score.agg"  ~ "PELOD Score",
+    variable == "pelod.cvs.agg"    ~ "PELOD Cardiovascular",
+    variable == "pelod.resp.agg"   ~ "PELOD Respiratory",
+    variable == "pelod.cns.agg"    ~ "PELOD CNS",
+    variable == "pelod.ren.agg"    ~ "PELOD Renal",
+    variable == "pelod.hem.agg"    ~ "PELOD Haematological",
+    variable == "psofa.score.agg"  ~ "pSOFA Score",
+    variable == "psofa.cvs.agg"    ~ "pSOFA Cardiovascular",
+    variable == "psofa.resp.agg"   ~ "pSOFA Respiratory",
+    variable == "psofa.cns.agg"    ~ "pSOFA CNS",
+    variable == "psofa.ren.agg"    ~ "pSOFA Renal",
+    variable == "psofa.hep.agg"    ~ "pSOFA Hepatic",
+    variable == "psofa.hem.agg"    ~ "pSOFA Haematological",
+    variable == "age.at.bc.days"   ~ "Age at Blood Culture (days)",
+    variable == "hosp.los.bc"      ~ "Hospital Length of Stay\nAfter Blood Culture",
+    variable == "hosp.delay"       ~ "Hospital Delay",
+    variable == "podium.cns.agg"   ~ "PODIUM CNS",
+    variable == "podium.resp.agg"  ~ "PODIUM Respiratory",
+    variable == "podium.cvs.agg"   ~ "PODIUM Cardiovascular",
+    variable == "podium.ren.agg"   ~ "PODIUM Renal",
+    variable == "podium.hep.agg"   ~ "PODIUM Hepatic",
+    variable == "podium.hem.agg"   ~ "PODIUM Haematological",
+    variable == "podium.coag.agg"  ~ "PODIUM Coagulation",
+    variable == "podium.imm.agg"   ~ "PODIUM Immune",
+    variable == "podium.n.od.agg"  ~ "PODIUM Neurological/Other",
+    variable == "podium.score.agg" ~ "PODIUM Score",
+    TRUE ~ variable
+  ))
+
 
 # Define a helper function to get the next value in a vector
 next_in_list <- function(lst, value) {
@@ -125,7 +202,8 @@ create_hist <- function(data, variable_name) {
     scale_fill_scico(palette = 'nuuk', direction = 1) +
     labs(subtitle = variable_name, 
          x = "", 
-         y = "")
+         y = "") +
+    theme(plot.subtitle = element_text(size = 8))
 }
 
 # Create a list of histograms, one for each variable
@@ -154,6 +232,8 @@ p_combined1
 # Save combined plot to PDF
 ggsave("../../images/cohort_summary_curated/cohort_plots_continuous.pdf" ,plot = p_combined1, height = 10, width = 10)
 
+# ggsave("../../images/cohort_summary_curated/cohort_plots_continuous.pdf" ,plot = p_combined1, height = 40, width = 40)
+
 # categorical: bar plots -----
 # Convert the data from wide to long
 df_long <- df |>
@@ -164,34 +244,65 @@ df_long <- df |>
 df_long <- df_long |> 
   filter(!(variable %in% c("hosp.adm", "hosp.dis", "picu.adm", "picu.dis", "bc.sampling", "death.date"))) 
 
-library(stringr)
-df_long <- df_long |>
-  mutate(value = str_replace_all(
-    value, 
-    c("abdominal infection" = "abdom. infec.",
-      "haematologic or immunologic" = "haemat. or immun.",
-      "third string" = "third replacement",
-      "technology dependence" = "tech. depend.",
-      "Group " = "Grp. ",
-      "Streptococci" = "Strep.",
-      "other middle eastern" = "other mid eastern",
-      "congenital or genetic" = "congen. or genetic"
-      )))
+df_long <- df_long %>%
+  mutate(variable = case_when(
+    variable == "age.grp"         ~ "Age Group",
+    variable == "sex"             ~ "Sex",
+    variable == "focus.grp"       ~ "Clinical Focus Group",
+    variable == "study.site"      ~ "Study Site",
+    variable == "category"        ~ "Category",
+    variable == "picu"            ~ "PICU",
+    variable == "picu.reason"     ~ "PICU Reason",
+    variable == "picu.los3"       ~ "PICU Length\nof Stay (≥3 days)",
+    variable == "death.picu.los3" ~ "Death or\nextended PICU stay",
+    variable == "ccc.final"       ~ "Chronic condition classification\nsystem Version 2",
+    variable == "pathogen.grp"    ~ "Pathogen Group",
+    variable == "cons05.mods"     ~ "Cons05 MODS",
+    variable == "cons05.cvs.agg"   ~ "Cons05 Cardiovascular",
+    variable == "cons05.resp.agg"  ~ "Cons05 Respiratory",
+    variable == "cons05.cns.agg"   ~ "Cons05 CNS",
+    variable == "cons05.ren.agg"   ~ "Cons05 Renal",
+    variable == "cons05.hep.agg"   ~ "Cons05 Hepatic",
+    variable == "cons05.hem.agg"   ~ "Cons05 Haematological",
+    variable == "any.comorb"      ~ "Any Comorbidity",
+    variable == "cahai"           ~ "Community or \nHospital-acquired Sepsis",
+    variable == "death.30.bc"     ~ "Death within 30 Days\nafter Blood Culture",
+    TRUE ~ variable
+  ))
 
-df_long <- df_long |>
-  mutate(variable = str_replace_all(
-    variable, 
-    c("age.category2" = "age.category",
-      "ethnicity" = "self.reported.ethnicity"
-    )))
+# library(stringr)
+# df_long <- df_long |>
+#   mutate(value = str_replace_all(
+#     value, 
+#     c("abdominal infection" = "Abdominal Infection",
+#       "haematologic or immunologic" = "Haematologic or Immunologic",
+#       # "third string" = "Third replacement",
+#       "technology dependence" = "Technology Dependence",
+#       "Group " = "Group ",
+#       "Streptococci" = "Streptococci",
+#       "other middle eastern" = "Other Middle Eastern",
+#       "congenital or genetic" = "Congenital or Genetic"
+#       )))
+# 
+# df_long <- df_long |>
+#   mutate(variable = str_replace_all(
+#     variable, 
+#     c("age.category2" = "Age Category",
+#       "ethnicity" = "Self reported Ethnicity"
+#     )))
 
 # drop pheno, because all cases
 df_long <- df_long |> dplyr::filter(!variable == "cohort_pheno")
+
+# clean names more ----
+df_long$variable |> unique()
+
 
 # Define a function to create a bar plot
 create_bar <- function(data, variable_name) {
   # Create the plot
   data |>
+    na.omit() |>
   ggplot(aes(x = value, fill = value)) +
     geom_bar(color = "black") +
     scale_fill_scico_d(palette = 'nuuk', direction = 1) +
@@ -224,11 +335,14 @@ p_combined2 <-
     ggarrange(plotlist = plot_list, nrow = nrow, ncol = ncol),
     left = textGrob("No. of patients", rot = 90, vjust = 1),
     bottom = textGrob("Category")
-  )
+  )  +
+  theme(plot.subtitle = element_text(size = 8))
 
 p_combined2
 # Save combined plot to PDF
 ggsave("../../images/cohort_summary_curated/cohort_plots_categorical.pdf", plot = p_combined2, height = 10, width = 10)
+
+# ggsave("../../images/cohort_summary_curated/cohort_plots_categorical.pdf", plot = p_combined2, height = 80, width = 40, limitsize = FALSE)
 
 # patchwork ----
 # plot1 + (plot2 + plot3) + plot_layout(ncol = 1)
@@ -337,8 +451,9 @@ print(all_category_counts)
 print(all_continuous_summary_stats)
 
 ## cohort ----
+
 select_cohort <- all_category_counts |> 
-  filter(Variable == "cohort_pheno") |>
+  # filter(Variable == "cohort_pheno") |>
   mutate(Variable = case_when(
   Variable == "cohort_pheno" ~ "Cohort",
   TRUE ~ Variable)) |>
@@ -350,58 +465,65 @@ select_cohort
 
 ## sex ----
 select_sex <- all_category_counts |> 
-  filter(Variable == "gender") |>
+  filter(Variable == "sex") |>
   mutate(Variable = case_when(
-    Variable == "gender" ~ "Sex",
+    Variable == "sex" ~ "Sex",
     TRUE ~ Variable))
 
 select_sex
 
 ## age ----
-select_age <- all_category_counts |> filter(Variable == "age.category2")
+select_age <- all_category_counts |> filter(Variable == "age.grp")
 
 select_age <- select_age |>
   mutate(Category = case_when(
-  Category == "Preterm newborn" ~ "1.Preterm newborn",
-  Category == "Term newborn" ~ "2.Term newborn",
-  Category == "Infant (1mt - 1y)" ~ "3.Infant (1mt - 1y)",
-  Category == "Toddler (2y - 5y)" ~ "4.Toddler (2y - 5y)",
-  Category == "School age (6y - 12y)" ~ "5.School age (6y - 12y)",
-  Category == "Adolescent (13y - 17y)" ~ "6.Adolescent (13y - 17y)",
-  TRUE ~ Category  # Default 
+  # Category == "Preterm newborn" ~ "1.Preterm newborn",
+  # Category == "Term newborn" ~ "2.Term newborn",
+  # Category == "Infant (1mt - 1y)" ~ "3.Infant (1mt - 1y)",
+  # Category == "Toddler (2y - 5y)" ~ "4.Toddler (2y - 5y)",
+  # Category == "School age (6y - 12y)" ~ "5.School age (6y - 12y)",
+  # Category == "Adolescent (13y - 17y)" ~ "6.Adolescent (13y - 17y)",
+  # TRUE ~ Category  # Default 
+    Category == "neo.preterm" ~ "1.Preterm newborn",
+    Category == "neo.term" ~ "2.Term newborn",
+    Category == "child.less12mt" ~ "3.Infant (1mt - 1y)",
+    Category == "child.1y.4y" ~ "4.Toddler (1y - 4y)",
+    Category == "child.5y.9y" ~ "5.Child (5y - 9y)",
+    Category == "child.10y.16y" ~ "6.Child (10y - 16y)",
+    TRUE ~ Category  # Default 
 ))  %>%
   arrange(Category)  |>
   mutate(Category = sub("^\\d+\\.", "", Category)) |>
   mutate(Variable = case_when(
-    Variable == "age.category2" ~ "Agr group",
+    Variable == "age.grp" ~ "Age group",
     TRUE ~ Variable  # Keeps any other variable unchanged
   ))
 
 select_age
 
 ## hospital.acp ----
-select_hospaq <- all_category_counts |> 
-  filter(Variable == "hospital.acquired") |>
-  mutate(Variable = case_when(
-    Variable == "hospital.acquired" ~ "Hospital acquired",
-    TRUE ~ Variable))
-
-select_hospaq
+# select_hospaq <- all_category_counts |> 
+#   filter(Variable == "hospital.acquired") |>
+#   mutate(Variable = case_when(
+#     Variable == "hospital.acquired" ~ "Hospital acquired",
+#     TRUE ~ Variable))
+# 
+# select_hospaq
 
 ## icu ----
 select_icu <- all_category_counts |> 
-  filter(Variable == "icu") |>
+  filter(Variable == "picu") |>
   mutate(Variable = case_when(
-    Variable == "icu" ~ "ICU",
+    Variable == "picu" ~ "ICU",
     TRUE ~ Variable))
 
 select_icu
 
 ## comorbid ----
 select_comorbidity <- all_category_counts |> 
-  filter(Variable == "comorbidity") |>
+  filter(Variable == "any.comorb") |>
   mutate(Variable = case_when(
-    Variable == "comorbidity" ~ "Comorbidities",
+    Variable == "any.comorb" ~ "Comorbidities",
     TRUE ~ Variable))
 
 select_comorbidity
@@ -418,9 +540,9 @@ select_comorbidgrp
 ## selected_dur_hosp ----
 selected_dur_hosp <- 
   all_continuous_summary_stats |> 
-  select(Variable, Median, Min, Max, SD) |>
+  dplyr::select(Variable, Median, Min, Max, SD) |>
   filter(
-    Variable == "hosp.dur.post.bc" # Length of stay after sepsis onset (days)
+    Variable == "hosp.los.bc" # Length of stay after sepsis onset (days)
   )
 
 selected_dur_hosp
@@ -428,22 +550,23 @@ selected_dur_hosp
 ## selected_dur_picu ----
 selected_dur_picu <- 
   all_continuous_summary_stats |> 
-  select(Variable, Median, Min, Max, SD) |>
+  dplyr::select(Variable, Median, Min, Max, SD) |>
   filter(
-    Variable == "picu.dur.post.bc" # Length of ICU stay after sepsis onset
+    Variable == "picu.los.bc" # Length of ICU stay after sepsis onset
     # Variable == "picu.dur" |  # Length of ICU stay
   )
 
+selected_dur_picu
 
 # rbind ----
 print("Demographics and clinical characteristics")
 
 selec_cat_bind <- 
   bind_rows(
-select_cohort, 
+# select_cohort, 
 select_sex,
 select_age,
-select_hospaq,
+# select_hospaq,
 select_icu,
 select_comorbidity,
 select_comorbidgrp,
@@ -459,7 +582,7 @@ selec_cont_bind <-
 # Format categorical data
 formatted_categorical <- selec_cat_bind %>%
   mutate(Value = paste0(Count, " (", Percentage, "%)")) %>%
-  select(Variable, Category, Value)
+  dplyr::select(Variable, Category, Value)
 
 # Format continuous data
 formatted_continuous <- selec_cont_bind %>%
@@ -469,11 +592,60 @@ formatted_continuous <- selec_cont_bind %>%
 # Combine both formatted data into a single dataframe
 combined_data_clinical_summary <- bind_rows(formatted_categorical, formatted_continuous)
 
+combined_data_clinical_summary <- combined_data_clinical_summary |>
+mutate(Variable = case_when(
+  Variable == "Comorbidity group" ~ " Comorbidity",
+  TRUE ~ Variable))
+
+combined_data_clinical_summary$Category <- combined_data_clinical_summary$Category |>
+  stringr::str_replace_all("\\.", " ") |>
+  stringr::str_to_sentence()
+
+colnames(combined_data_clinical_summary)[colnames(combined_data_clinical_summary) == 'Value'] <- 'Count'
+
+combined_data_clinical_summary <- combined_data_clinical_summary |>
+  mutate(Variable = case_when(
+    Variable == "hosp.los.bc" ~ "Days in hospital",
+    Variable == "picu.los.bc" ~ "Days in ICU",
+    TRUE ~ Variable))
+
 # Print or view the combined table
 print(combined_data_clinical_summary)
 
 # Save the combined summary statistics table to a CSV file
 write.table(combined_data_clinical_summary, file = "../../data/cohort_summary_curated/combined_data_clinical_summary.tsv", quote = FALSE, row.names = FALSE, sep = "\t")
+
+select_pathogen <- all_category_counts |> 
+  filter(Variable == "pathogen.grp") |>
+  arrange(desc(Count)) |>
+  mutate(Value = paste0(Count, " (", Percentage, "%)")) |>
+  dplyr::select( Variable, Category, Value) |>
+  mutate(Variable = case_when(
+    Variable == "picu" ~ "Pathogen group",
+    TRUE ~ Variable))
+
+select_pathogen
+
+write.table(select_pathogen, file = "../../data/cohort_summary_curated/combined_data_clinical_summary_pathogens.tsv", quote = FALSE, row.names = FALSE, sep = "\t")
+
+
+select_cahai <- all_category_counts |> 
+  filter(Variable == "cahai") |>
+  arrange(desc(Count)) |>
+  mutate(Value = paste0(Count, " (", Percentage, "%)")) |>
+  dplyr::select( Variable, Category, Value) |>
+  mutate(Variable = case_when(
+    Category == "ca" ~ "Community",
+    Category == "hai" ~ "Hospital",
+    Category == "los.hai" ~ "Hospital late onset",
+    Category == "los.ca" ~ "Community late onset",
+    Category == "eos" ~ "Early onset",
+    TRUE ~ Variable))
+
+write.table(select_cahai, file = "../../data/cohort_summary_curated/combined_data_clinical_summary_cahai.tsv", quote = FALSE, row.names = FALSE, sep = "\t")
+
+
+# Is this episode categorised as community or hospital-acquired sepsis? In newborns, those in whom blood culture was taken <= third day of life (i.e. age.at.bc <= 2)) are classified as early-onset sepsis, otherwise as late-onset sepsis (LOS). LOS in newborns is divided into community-acquired (i.e. hosp.delay <= 2) and hospital-acquired (i.e. hosp.delay > 2) based on the variable hosp.delay
 
 
 # date ----
@@ -506,4 +678,34 @@ write.table(combined_data_clinical_summary, file = "../../data/cohort_summary_cu
 # ggsave("plots_dates.pdf", plot = gridExtra::marrangeGrob(grobs = plots_date, ncol = 2, nrow = 2))
 
 
+# controls ----
+controls <- read.csv2(file = "../../data/cohort_summary_curated/20190821.exome.phenotypes.txt", head = T, sep = "\t")
+head(controls)
+
+samples <- read.csv("../../data/cohort_summary_curated/SAMPLE_LIST", header = F)
+samples$sample <- samples$V1
+samples <- samples |> dplyr::select(-V1)
+samples$cohort_pheno <- samples$sample
+samples$cohort_pheno[grep("^setpt", samples$sample)] <- "0"
+samples <- samples |> filter(cohort_pheno == 0)
+samples$SAMPLE_ID <- samples$sample
+
+controls <- controls |> filter(SAMPLE_ID %in% samples$SAMPLE_ID)
+
+# # Replace any value that starts with "setpt" with "0" in the "cohort_pheno" column
+# controls$cohort_pheno <- "unknown"
+# controls$cohort_pheno[grep("^setpt", controls$SAMPLE_ID)] <- "0"
+# controls <- controls |> filter(cohort_pheno == 0)
+
+select_sex_controls <- controls %>%
+  mutate(SEX = ifelse(SEX == 1, "male", "female")) %>%
+  dplyr::count(SEX) %>%
+  mutate(Percentage = round(100 * n / sum(n), 2)) %>%
+  dplyr::rename(Category = SEX, Count = n) %>%
+  mutate(Variable = "Sex") %>%
+  dplyr::select(Variable, Category, Count, Percentage)
+
+print(select_sex_controls)
+
+write.table(select_sex_controls, file = "../../data/cohort_summary_curated/combined_data_clinical_summary_controls.tsv", quote = FALSE, row.names = FALSE, sep = "\t")
 

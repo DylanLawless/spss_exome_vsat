@@ -220,10 +220,24 @@ df_summaries_grouped <- df_summaries |>
   arrange(AC) |>
   mutate(Rank = row_number())
 
+df_summaries_grouped |> 
+  mutate(genotype = as.character(genotype),
+       genotype = case_when(
+         genotype == "2" ~ "Homozygous",
+         genotype == "1" ~ "Heterozygous",
+         TRUE ~ genotype
+       )) 
+
 ac_count_per_var <- df_summaries_grouped |>
+  mutate(genotype = as.character(genotype),
+         genotype = case_when(
+           genotype == "2" ~ "Hom",
+           genotype == "1" ~ "Het",
+           TRUE ~ genotype
+         )) |>
   ggplot(aes(x = Rank, y = AC, fill=as.factor(genotype))) +
-  geom_bar(stat = "identity") +
-  scale_fill_manual(values = c("grey", "#ee5d6c"), name = "Carrier\ngenotype", 
+  geom_bar(stat = "identity",) +
+  scale_fill_manual(values = c("grey40", "#ee5d6c"), name = "Carrier\ngenotype", 
                     guide = guide_legend(reverse = TRUE)) +
   theme_minimal() +
   xlab("Unique variant\n(arranged by allele count)") +
@@ -321,19 +335,47 @@ temp <- merge(df_summary_vpg, df_summary_nc, by="SYMBOL")
 df_summary_unq_vpg_nc <- merge(temp, df_summary_unq)
 rm(temp)
 
+# show a subset of genes for better legibility
+
+select_labels <- function(df, pathway_ids, max_labels = 10) {
+  selected <- lapply(pathway_ids, function(pid) {
+    lbl <- df |>
+      dplyr::filter(pathway_id == pid) |>
+      dplyr::pull(SYMBOL) |>
+      unique()
+    
+    if (length(lbl) > max_labels) {
+      indices <- round(seq(1, length(lbl), length.out = max_labels))
+      lbl[indices]
+    } else {
+      lbl
+    }
+  })
+  
+  sort(unique(unlist(selected)))
+}
+
+# Example usage:
+selected_labels <- select_labels(df_summary_unq_vpg_nc, c(22, 586, 836), 8)
+
 var_per_gene <- df_summary_unq_vpg_nc |>
   dplyr::select(pathway_id, SYMBOL, var_per_gene) |>
   unique() |>
-  ggplot(aes(x=SYMBOL, y=var_per_gene)) +
+  ggplot(aes(x = SYMBOL, y = var_per_gene)) +
+    scale_fill_scico(palette = 'lapaz', direction = 1,
+                     name = "Variants\nper gene",) + # batlowK, acton, lajolla, lapaz, turk
+  # geom_point(fill = "grey20", colour = "black", shape = 21) +
   geom_point(aes(fill=var_per_gene), color="black", shape = 21) +
-  xlab("Gene symbol") +
+  xlab("Gene symbol*") +
   ylab("No. variants") +
-  theme_minimal()  +
-  scale_fill_scico(palette = 'lapaz', direction = 1,
-                   name = "Variants\nper gene",) + # batlowK, acton, lajolla, lapaz, turku
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
-  facet_wrap(~ pathway_id, scales = "free_x", labeller = labeller(pathway_id = function(x) paste("Pathway ID", x)))
-
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  facet_grid(~ pathway_id, 
+             scales = "free_x",
+             # space = "free",
+             labeller = labeller(pathway_id = function(x) paste("Pathway ID", x))) +
+  scale_x_discrete(breaks = selected_labels, labels = selected_labels) +
+  labs(subtitle = "*Subset of 8 genes per pathway listed")
 
 var_per_gene
 
@@ -343,6 +385,8 @@ ggsave(paste("../../images/", output_directory, file_suffix, "var_per_gene.pdf",
 var_per_gene_ac_count_per_var <- (ac_count_per_var / var_per_gene)
 
 ggsave(paste("../../images/", output_directory, file_suffix, "var_per_gene_ac_count_per_var.pdf", sep = "") ,plot = var_per_gene_ac_count_per_var + plot_annotation(tag_levels = 'A'), width = 8, height = 5 )
+
+ggsave(paste("../../images/", output_directory, file_suffix, "var_per_gene_ac_count_per_var.pdf", sep = "") ,plot = var_per_gene_ac_count_per_var + plot_annotation(tag_levels = 'A'), width = 6, height = 4 )
 
 # Report ----
 df_report <- df
@@ -510,5 +554,32 @@ df_report |>
   filter(ACMG_total_score > 1) |> 
   dplyr::select(SYMBOL) |> unique()
 
+
+carrier_total <- df_report_main_text |> dplyr::select(sample.id) |> unique() |> tally()
+carrier_group <- df_report_main_text |> group_by(pathway_id) |> dplyr::select(sample.id) |> unique() |> tally()
+
+548 - carrier_total
+carrier_total
+carrier_group
+548 - carrier_group[1,2]
+548 - carrier_group[2,2]
+548 - carrier_group[3,2]
+
+
+carrier_group[1,2] + carrier_group[2,2] + carrier_group[3,2]
+
+
+# Count the number of pathways each sample.id appears in, then tally the overlaps
+# i.e. 235 indivuals belong to 1 pathway, 151 carried variants 2 papthways, 32 individuals had variants in 3. 
+overlap_counts <- df_report_main_text %>%
+  group_by(sample.id) %>%
+  summarise(n_groups = n_distinct(pathway_id)) %>%
+  dplyr::count(n_groups)
+
+overlap_counts
+
+
 # Go now to cohort_summary_curated_r/cohort_summary_post_ppi.R
+
+
 

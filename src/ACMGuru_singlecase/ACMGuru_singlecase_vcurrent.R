@@ -248,6 +248,23 @@ print("We are adding PS3 now")
 source("../ACMG_filters/distribution_variables.R")
 source("../ACMG_filters/acmg_filters.R")
 
+# # edit on 20260205 
+# see acmg_filters for collapse
+# 
+# # collapse ACMG criteria column
+# df$ACMG_all_positive <- apply(
+#   df[, acmg_labels, drop = FALSE],
+#   1,
+#   function(x) {
+#     cols <- names(x)[!is.na(x)]
+#     if (length(cols) == 0) NA_character_
+#     else gsub("ACMG_", "", paste(cols, collapse = " "))
+#   }
+# )
+df <- df %>% dplyr::select(ACMG_all_positive, everything())
+
+
+
 # plot scores ----
 # 
 p.acmg_score <- df |> 
@@ -258,7 +275,19 @@ p.acmg_score <- df |>
 	theme_minimal() +
 	xlab("ACMG score") +
 	ylab("No. variants") +
-	geom_text(stat='count', aes(label=..count.., y=..count..+300), color = "black") + 
+	# geom_text(stat='count', aes(label=..count.., y=..count..+300), color = "black") + 
+  geom_text_repel(stat='count', color = "black", 
+                  alpha = 0.8,
+                  box.padding = 0.5, max.overlaps = Inf,
+                  # padding = unit(0.5, "lines"),
+                  # nudge_y = 0.05,  
+                  nudge_x = .0,
+                  nudge_y = .1,
+                  direction = "y",
+                  aes(label= ..count..)
+  ) +
+  
+  scale_y_continuous(expand = expansion(mult = c(0, 0.1))) +
 	guides(fill=FALSE) +
 	scale_fill_scico(palette = 'bamako', direction = 1) # batlowK, acton, lajolla, lapaz, turku
 p.acmg_score 
@@ -278,7 +307,8 @@ patch2 <- (
 )  | (p.pathogenicity_distributions_engines_threshold) + plot_annotation(tag_levels = 'A')
 # patch2
 ggsave(paste("../../images/", output_directory, file_suffix, "patch2.pdf", sep = "") ,plot = patch2 + plot_annotation(tag_levels = 'A'), width = 16, height = 10 )
- 
+
+
 # plot order
 # p.criteria_count_each_gene
 # p.criteria_gene_total
@@ -335,13 +365,43 @@ list_of_used_columns <- c(list_of_used_columns,
 # df_report |> names()
 
 print("Updating `ACMG_total_score > 9` to `ACMG_total_score > 9`")
+
+# edit on 20260205 - add more columns
+# df_report_main_text <- df_report |> 
+#   filter(ACMG_total_score > 5 ) |>
+#   filter(ACMG_total_score > 9 ) |>
+#   dplyr::select(sample.id, 
+#                 # ACMG_score, 
+#                 # ACMG_count, 
+#                 # ACMG_highest, 
+#                 SYMBOL, 
+#                 rownames,
+#                 # chr,
+#                 HGVSp,
+#                 HGVSc,
+#                 Consequence,
+#                 # IMPACT,                   
+#                 genotype,
+#                 Inheritance,
+#                 gnomAD_AF,
+#                 # comp_het_flag  
+#                 # list_of_used_columns
+#                 ACMG_total_score
+#                 ) |> 
+#   arrange(SYMBOL, sample.id,
+#           desc(ACMG_total_score),
+#           sample.id)
+
+# Sample ID	Symbol	Variant GRCh38	HGVSp / HGVSc	Consequence	Inheritance	gnomAD AF
+
 df_report_main_text <- df_report |> 
   filter(ACMG_total_score > 5 ) |>
   filter(ACMG_total_score > 9 ) |>
   dplyr::select(sample.id, 
-                # ACMG_score, 
-                # ACMG_count, 
-                # ACMG_highest, 
+                ACMG_all_positive,
+                # ACMG_score,
+                # ACMG_count,
+                # ACMG_highest,
                 SYMBOL, 
                 rownames,
                 # chr,
@@ -355,10 +415,18 @@ df_report_main_text <- df_report |>
                 # comp_het_flag  
                 # list_of_used_columns
                 ACMG_total_score
-                ) |> 
+  ) |> 
   arrange(SYMBOL, sample.id,
           desc(ACMG_total_score),
           sample.id)
+
+
+# clean ACMG criteia 
+df_report_main_text$ACMG_all_positive <- gsub(
+  "ACMG_",
+  "",
+  df_report_main_text$ACMG_all_positive
+)
 
 colnames(df_report_main_text)[colnames(df_report_main_text) == 'ACMG_total_score'] <- 'ACMG score'
 colnames(df_report_main_text)[colnames(df_report_main_text) == 'rownames'] <- 'Variant GRCh38'
@@ -529,58 +597,58 @@ setwd("../cohort_summary_curated")
 # 
 # samples <- samples |> filter(cohort_pheno == 1)
 
-# Clinical data ----
-df <- read.csv("../../data/cohort_summary_curated/sepsis_v2.csv")
-
-df <- df |> dplyr::select(
-	-exome_dataset_1,
-	-exome_dataset_1.1,  
-	-exome_dataset_2_path,
-	-exome_dataset_1_path,
-	-sqlpkey,
-	-personal.id)
-
-df$sample.id <- gsub("-", "", df$sample.id)
-df_v1 <- df
-
-# Clinical data - most updated?
-df <- read.csv("../../data/cohort_summary_curated/20200623_v3_clical_data_for_gwas/spss_gwas_episode.csv")
-df$sample.id <- gsub("-", "", df$sample.id)
-df_v2 <- df 
-
-# Merge all clinical data ----
-# This step meges two datasets and clean up columns which are duplicated as a result.
-# Merge the two clinical datasets to get best coverage.
-
-# Merge the data frames while keeping all rows from both
-df_v3 <- merge(df_v1, df_v2, by = "sample.id", all = TRUE)
-
-# List of columns that end with .x or .y
-columns_x <- grep("\\.x$", names(df_v3), value = TRUE)
-columns_y <- grep("\\.y$", names(df_v3), value = TRUE)
-
-# Remove .x or .y suffix and find common base names to identify matches
-base_names_x <- sub("\\.x$", "", columns_x)
-base_names_y <- sub("\\.y$", "", columns_y)
-
-# For each matched column name, choose which version (.x or .y) to keep
-for (base_name in intersect(base_names_x, base_names_y)) {
-	# Example logic: keep the .y version if not all are NA, otherwise keep .x
-	if (all(is.na(df_v3[[paste0(base_name, ".y")]]))) {
-		df_v3[[base_name]] <- df_v3[[paste0(base_name, ".x")]]
-	} else {
-		df_v3[[base_name]] <- df_v3[[paste0(base_name, ".y")]]
-	}
-	# Drop the now unnecessary .x and .y columns
-	df_v3[[paste0(base_name, ".x")]] <- NULL
-	df_v3[[paste0(base_name, ".y")]] <- NULL
-}
-
-# Remove the original .x and .y columns if they were not processed (not paired)
-remaining_x <- setdiff(columns_x, paste0(base_names_x[base_names_x %in% base_names_y], ".x"))
-remaining_y <- setdiff(columns_y, paste0(base_names_y[base_names_y %in% base_names_x], ".y"))
-df_v3[remaining_x] <- NULL
-df_v3[remaining_y] <- NULL
+# # Clinical data ----
+# df <- read.csv("../../data/cohort_summary_curated/sepsis_v2.csv")
+# 
+# df <- df |> dplyr::select(
+# 	-exome_dataset_1,
+# 	-exome_dataset_1.1,
+# 	-exome_dataset_2_path,
+# 	-exome_dataset_1_path,
+# 	-sqlpkey,
+# 	-personal.id)
+# 
+# df$sample.id <- gsub("-", "", df$sample.id)
+# df_v1 <- df
+# 
+# # Clinical data - most updated?
+# df <- read.csv("../../data/cohort_summary_curated/20200623_v3_clical_data_for_gwas/spss_gwas_episode.csv")
+# df$sample.id <- gsub("-", "", df$sample.id)
+# df_v2 <- df
+# 
+# # Merge all clinical data ----
+# # This step meges two datasets and clean up columns which are duplicated as a result.
+# # Merge the two clinical datasets to get best coverage.
+# 
+# # Merge the data frames while keeping all rows from both
+# df_v3 <- merge(df_v1, df_v2, by = "sample.id", all = TRUE)
+# 
+# # List of columns that end with .x or .y
+# columns_x <- grep("\\.x$", names(df_v3), value = TRUE)
+# columns_y <- grep("\\.y$", names(df_v3), value = TRUE)
+# 
+# # Remove .x or .y suffix and find common base names to identify matches
+# base_names_x <- sub("\\.x$", "", columns_x)
+# base_names_y <- sub("\\.y$", "", columns_y)
+# 
+# # For each matched column name, choose which version (.x or .y) to keep
+# for (base_name in intersect(base_names_x, base_names_y)) {
+# 	# Example logic: keep the .y version if not all are NA, otherwise keep .x
+# 	if (all(is.na(df_v3[[paste0(base_name, ".y")]]))) {
+# 		df_v3[[base_name]] <- df_v3[[paste0(base_name, ".x")]]
+# 	} else {
+# 		df_v3[[base_name]] <- df_v3[[paste0(base_name, ".y")]]
+# 	}
+# 	# Drop the now unnecessary .x and .y columns
+# 	df_v3[[paste0(base_name, ".x")]] <- NULL
+# 	df_v3[[paste0(base_name, ".y")]] <- NULL
+# }
+# 
+# # Remove the original .x and .y columns if they were not processed (not paired)
+# remaining_x <- setdiff(columns_x, paste0(base_names_x[base_names_x %in% base_names_y], ".x"))
+# remaining_y <- setdiff(columns_y, paste0(base_names_y[base_names_y %in% base_names_x], ".y"))
+# df_v3[remaining_x] <- NULL
+# df_v3[remaining_y] <- NULL
 
 # Merge clinical with main genetics tables ----
 # df <- merge(samples, df, by = "sample.id", all.x = TRUE)
@@ -588,6 +656,18 @@ df_v3[remaining_y] <- NULL
 # missing_samples <- subset(df, is.na(study.site))
 # missing_sample_ids <- missing_samples$sample.id
 
+
+
+
+
+
+
+
+
+
+
+# updated clinical data ----
+df <- readRDS(file = "../../data/cohort_summary_curated/cohort_summary_curated_r_df.Rds")
 
 df_report_main_text_clinical <-
 	merge(df_report_main_text, df, by = "sample.id", all.x = TRUE)
@@ -604,11 +684,149 @@ saveRDS(df_report_main_text_clinical, file=paste0("../../data/", output_director
 geneset_MCL_ID <- "" #ignore pathway level info
 write.csv(df_report_main_text_clinical,  paste0("../../data/", output_directory, "ACMGuru_singlecase_genetic_df_report_main_text_clinical.csv"))
 
+names(df_report_main_text_clinical)
 
 df_report_main_text_clinical_short <- df_report_main_text_clinical |>
-  dplyr::select(sample.id:'ACMG score',sex,age.at.bc,pathogen.grp, focus.grp, picu)
+  dplyr::select(sample.id:'ACMG score',sex,
+                # age.at.bc.days, 
+                age.grp,pathogen.grp, focus.grp, death.picu.los3, podium.score.agg)
+
+# death.30.bc - Did the child die in the first 30 days after blood culture sampling. CAVE some patients experienced more than one sepsis episode in the last thirty days before death. This needs to be accounted for in the data analysis!!
+# picu.los3 => picu.los.bc >= 3 (in those not admitted to picu == “no”) 
+# death.picu.los3 => death.30.bc == "yes" | picu.los3 == "yes"
+# A composite endpoint indicating whether the child either died within 30 days after blood culture sampling or had a PICU stay of ≥3 days (for those not admitted to PICU, recorded as “no”).
+
+
+# **podium.score.agg**  
+  # A composite metric summarising sepsis severity. Lower scores indicate milder clinical status, whereas higher scores reflect greater severity and risk of adverse outcomes.
+
+# PA cases ----
+df_pa <- read.csv(file = "../../data/cohort_summary_curated/20250303_asgari_cases_pa.tsv", sep = "\t", header = TRUE)
+df_pa <- df_pa |> filter(sample.id == "S17") # matched on a previously reported variant
+df_pa <- df_pa |>
+  mutate(sample.id = as.character(sample.id),
+         sample.id = case_when(
+           sample.id == "S17" ~ "P302",
+           TRUE ~ sample.id
+         )) |>
+  dplyr::select(-age_mo)
+
+df_pa$pathogen.grp <- "paeruginosa"
+df_pa$death.picu.los3 <- "yes"
+
+df_report_main_text_clinical_short <- df_report_main_text_clinical_short %>%
+  left_join(df_pa, by = "sample.id", suffix = c("", ".pa")) %>%
+  mutate(
+    age.grp = coalesce(age.grp, age.grp.pa),
+    sex = coalesce(sex, sex.pa),
+    focus.grp = coalesce(focus.grp, focus.grp.pa),
+    pathogen.grp = coalesce(pathogen.grp, pathogen.grp.pa),
+    death.picu.los3 = coalesce(death.picu.los3, death.picu.los3.pa)
+  ) %>%
+  dplyr:: select(-age.grp.pa, -sex.pa, -focus.grp.pa, -pathogen.grp.pa, -death.picu.los3.pa)
+
+# colnames(df)[colnames(df) == 'oldName'] <- 'newName'
+colnames(df_report_main_text_clinical_short)[colnames(df_report_main_text_clinical_short) == 'age.grp'] <- 'Age'
+colnames(df_report_main_text_clinical_short)[colnames(df_report_main_text_clinical_short) == 'pathogen.grp'] <- 'Pathogen'
+colnames(df_report_main_text_clinical_short)[colnames(df_report_main_text_clinical_short) == 'focus.grp'] <- 'Clinical focus'
+# colnames(df_report_main_text_clinical_short)[colnames(df_report_main_text_clinical_short) == 'picu'] <- 'pICU'
+colnames(df_report_main_text_clinical_short)[colnames(df_report_main_text_clinical_short) == 'gnomAD_AF'] <- 'gnomAD AF'
+colnames(df_report_main_text_clinical_short)[colnames(df_report_main_text_clinical_short) == 'sex'] <- 'Sex'
+colnames(df_report_main_text_clinical_short)[colnames(df_report_main_text_clinical_short) == 'SYMBOL'] <- 'Symbol'
+colnames(df_report_main_text_clinical_short)[colnames(df_report_main_text_clinical_short) == 'death.picu.los3'] <- 'Death or extended pICU'
+colnames(df_report_main_text_clinical_short)[colnames(df_report_main_text_clinical_short) == 'podium.score.agg'] <- 'PODIUM score'
+colnames(df_report_main_text_clinical_short)[colnames(df_report_main_text_clinical_short) == 'sample.id'] <- 'Sample ID'
+
+df_report_main_text_clinical_short <- 
+  df_report_main_text_clinical_short |>
+  mutate(genotype = as.character(genotype),
+         genotype = case_when(
+           genotype == "1" ~ "Het",
+           genotype == "2" ~ "Hom",
+           TRUE ~ genotype
+         ))
+
+df_report_main_text_clinical_short <- df_report_main_text_clinical_short %>%
+  mutate(`Clinical focus` = case_when(
+    `Clinical focus` == "uti" ~ "Urinary tract",
+    `Clinical focus` == "wound" ~ "Wound",
+    `Clinical focus` == "primbsi" ~ "Primary bloodstream",
+    `Clinical focus` == "clabsi" ~ "Central line-associated bloodstream",
+    `Clinical focus` == "abdominal" ~ "Abdominal",
+    `Clinical focus` == "osteoarticular" ~ "Osteoarticular",
+    `Clinical focus` == "cns" ~ "Central nervous system",
+    `Clinical focus` == "earnosethroat" ~ "Ear-nose-throat",
+    `Clinical focus` == "pneumonia" ~ "Pneumonia",
+    `Clinical focus` == "skin" ~ "Skin and soft tissue",
+    `Clinical focus` == "other" ~ "Other",
+    TRUE ~ `Clinical focus`
+  ))
+
+
+df_report_main_text_clinical_short <- df_report_main_text_clinical_short %>%
+  mutate(Age = case_when(
+    Age == "neo.term" ~ "Term newborn",
+    Age == "child.5y.9y" ~ "Child (5y - 9y)",
+    Age == "child.1y.4y" ~ "Toddler (1y - 4y)",
+    Age == "child.less12mt" ~ "Infant (1mt - 1y)",
+    Age == "neo.preterm" ~ "Preterm newborn",
+    Age == "child.10y.16y" ~ "Child (10y - 16y)",
+    TRUE ~ Age
+  ))
+
+df_report_main_text_clinical_short <- df_report_main_text_clinical_short %>%
+  mutate(Pathogen = case_when(
+    Pathogen == "othergneg"    ~ "Other Gram-negative",
+    Pathogen == "enterococcus" ~ "Enterococcus",
+    Pathogen == "sagalactiae"  ~ "Streptococcus agalactiae",
+    Pathogen == "spyogenes"     ~ "Streptococcus pyogenes",
+    Pathogen == "paeruginosa"   ~ "Pseudomonas aeruginosa",
+    Pathogen == "cons"          ~ "Coagulase-negative staphylococci",
+    Pathogen == "hinfluenzae"   ~ "Haemophilus influenzae",
+    Pathogen == "klebsiella"    ~ "Klebsiella",
+    Pathogen == "spneumoniae"   ~ "Streptococcus pneumoniae",
+    Pathogen == "ecoli"         ~ "Escherichia coli",
+    Pathogen == "saureus"       ~ "Staphylococcus aureus",
+    Pathogen == "candida"       ~ "Candida",
+    Pathogen == "viridansgroup" ~ "Viridans group streptococci",
+    TRUE ~ Pathogen
+  ))
+
+df_report_main_text_clinical_short <- df_report_main_text_clinical_short %>%
+  mutate(Pathogen = if_else(is.na(Pathogen),
+                            NA_character_,
+                            stringr::str_to_sentence(Pathogen)))
+
+df_report_main_text_clinical_short <- df_report_main_text_clinical_short %>%
+  mutate(Sex = if_else(is.na(Sex),
+                            NA_character_,
+                            stringr::str_to_sentence(Sex)))
+
+df_report_main_text_clinical_short <- df_report_main_text_clinical_short %>%
+  mutate(`Death or extended pICU` = if_else(is.na(`Death or extended pICU`),
+                       NA_character_,
+                       stringr::str_to_sentence(`Death or extended pICU`)))
+
+df_report_main_text_clinical_short <- df_report_main_text_clinical_short %>%
+  mutate(Consequence = if_else(is.na(Consequence),
+                        NA_character_,
+                        stringr::str_to_sentence(Consequence)))
+
+df_report_main_text_clinical_short <- df_report_main_text_clinical_short %>%
+  mutate(Consequence = gsub("_", " ", Consequence))
+
+df_report_main_text_clinical_short <- df_report_main_text_clinical_short %>%
+  mutate(Consequence = gsub("&", ", ", Consequence))
+
+
+df_report_main_text_clinical_short
 
 write.csv(df_report_main_text_clinical_short,  paste0("../../data/", output_directory, "ACMGuru_singlecase_genetic_df_report_main_text_clinical_short.csv"))
+
+# write.csv(df_report_main_text_clinical_short,  paste0("../../data/", output_directory, "ACMGuru_singlecase_genetic_df_report_main_text_clinical_short.csv"))
+
+# write.table(df_report_main_text_clinical_short,  paste0("../../data/", output_directory, "ACMGuru_singlecase_genetic_df_report_main_text_clinical_short.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+
 
 
 

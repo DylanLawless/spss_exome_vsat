@@ -379,6 +379,14 @@ return(p_arch_leg)
 # archipelago_plot(df1, df2)
 archipelago_plot(df1, df2_ready)
 
+# Define output path
+output_path <- "~/web/spss_exome_vsat/data/archipelago/"
+
+# Save df1_clean and df2_clean as TSV
+write.table(df1, file = file.path(output_path, "df1_clean_archipelago.tsv"), sep = "\t", row.names = FALSE, quote = FALSE)
+write.table(df2_ready, file = file.path(output_path, "df2_clean_archipelago.tsv"), sep = "\t", row.names = FALSE, quote = FALSE)
+
+
  # 13
 # 44949840
 # A

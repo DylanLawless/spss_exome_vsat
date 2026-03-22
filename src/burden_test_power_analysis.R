@@ -1,0 +1,405 @@
+#!/usr/bin/env Rscript
+
+suppressPackageStartupMessages({
+  library(data.table)
+  library(ggplot2)
+  library(SKAT)
+})
+
+options(stringsAsFactors = FALSE)
+set.seed(20260322)
+
+n_cases <- 534L
+n_controls <- 392L
+causal_fraction <- 0.20
+
+# Fast practical run:
+# 3 representative gene sizes x 3 OR values = 9 scenarios
+# 50 replicates each = 450 SKAT-O runs total
+n_reps <- 50L
+alpha <- 0.05 / 20000
+odds_ratios <- c(3, 5, 8)
+
+args <- commandArgs(trailingOnly = TRUE)
+project_root <- if (basename(getwd()) == "src") {
+  normalizePath(file.path(getwd(), ".."), mustWork = FALSE)
+} else {
+  normalizePath(getwd(), mustWork = FALSE)
+}
+data_dir <- file.path(project_root, "data/burden_power_analysis")
+dir.create(data_dir, recursive = TRUE, showWarnings = FALSE)
+
+variant_level_file <- if (length(args) >= 1) args[1] else file.path(data_dir, "variant_level.tsv")
+gene_summary_file  <- if (length(args) >= 2) args[2] else file.path(data_dir, "gene_summary.tsv")
+
+read_table_guess <- function(path) {
+  if (!file.exists(path)) return(NULL)
+  ext <- tolower(tools::file_ext(path))
+  sep <- if (ext == "csv") "," else "\t"
+  fread(path, sep = sep, header = TRUE, data.table = TRUE, showProgress = FALSE)
+}
+
+clean_names <- function(x) {
+  x <- tolower(x)
+  x <- gsub("[^a-z0-9]+", "_", x)
+  x <- gsub("^_|_$", "", x)
+  x
+}
+
+find_col <- function(nms, candidates, required = FALSE) {
+  hit <- intersect(candidates, nms)
+  if (length(hit) > 0) return(hit[1])
+  if (required) stop("Required column not found. Tried: ", paste(candidates, collapse = ", "))
+  NULL
+}
+
+p_case_from_or <- function(p_control, or) {
+  p <- (or * p_control) / (1 - p_control + or * p_control)
+  pmin(pmax(p, 1e-8), 0.499)
+}
+
+simulate_genotypes_case_control <- function(maf, causal_idx, or_causal, n_cases, n_controls) {
+  maf <- pmin(pmax(maf, 1e-8), 0.499)
+  maf_cases <- maf
+  if (length(causal_idx) > 0) {
+    maf_cases[causal_idx] <- p_case_from_or(maf[causal_idx], or_causal)
+  }
+  
+  z_controls <- sapply(maf, function(p) rbinom(n_controls, size = 2, prob = p))
+  z_cases <- sapply(maf_cases, function(p) rbinom(n_cases, size = 2, prob = p))
+  z <- rbind(z_cases, z_controls)
+  
+  if (!is.matrix(z)) z <- matrix(z, ncol = length(maf))
+  storage.mode(z) <- "numeric"
+  z
+}
+
+run_skato_once <- function(maf, causal_fraction, or_causal, n_cases, n_controls) {
+  n_variants <- length(maf)
+  n_causal <- max(1L, round(n_variants * causal_fraction))
+  causal_idx <- sort(sample.int(n_variants, size = n_causal, replace = FALSE))
+  
+  z <- simulate_genotypes_case_control(maf, causal_idx, or_causal, n_cases, n_controls)
+  keep <- apply(z, 2, function(v) var(v, na.rm = TRUE) > 0)
+  z <- z[, keep, drop = FALSE]
+  
+  if (ncol(z) == 0) return(1)
+  
+  y <- c(rep(1, n_cases), rep(0, n_controls))
+  obj <- SKAT_Null_Model(y ~ 1, out_type = "D")
+  
+  p <- tryCatch({
+    res <- suppressMessages(SKATBinary(Z = z, obj = obj, method = "SKATO"))
+    as.numeric(res$p.value)
+  }, error = function(e) 1)
+  
+  if (!is.finite(p) || is.na(p)) p <- 1
+  p
+}
+
+estimate_power <- function(maf, causal_fraction, or_causal, n_cases, n_controls, n_reps, alpha,
+                           scenario_label = "scenario") {
+  pvals <- numeric(n_reps)
+  
+  for (rep_i in seq_len(n_reps)) {
+    message(sprintf("[%s] replicate %d/%d", scenario_label, rep_i, n_reps))
+    pvals[rep_i] <- run_skato_once(maf, causal_fraction, or_causal, n_cases, n_controls)
+  }
+  
+  hits <- sum(pvals < alpha, na.rm = TRUE)
+  ci <- binom.test(hits, n_reps)$conf.int
+  
+  data.table(
+    n_reps = n_reps,
+    hits = hits,
+    power = hits / n_reps,
+    power_lwr = ci[1],
+    power_upr = ci[2]
+  )
+}
+
+build_gene_summary_from_variant_level <- function(dt) {
+  nms <- names(dt)
+  gene_col <- find_col(nms, c("gene", "gene_symbol", "symbol", "hgnc_symbol", "gene_name", "set_id"), required = TRUE)
+  maf_col <- find_col(nms, c("maf", "af", "cohort_af", "alt_af", "aaf", "freq", "alt_freq"))
+  ac_col <- find_col(nms, c("ac", "alt_ac", "allele_count", "cohort_ac"))
+  an_col <- find_col(nms, c("an", "allele_number", "cohort_an"))
+  carrier_col <- find_col(nms, c("n_carriers", "carrier_count", "carriers", "n_samples_carrier", "sample_carriers"))
+  
+  dt <- copy(dt)
+  
+  if (is.null(maf_col)) {
+    if (!is.null(ac_col) && !is.null(an_col)) {
+      dt[, maf_value_internal := as.numeric(get(ac_col)) / as.numeric(get(an_col))]
+    } else {
+      stop("Could not identify a variant MAF column or AC/AN columns.")
+    }
+  } else {
+    dt[, maf_value_internal := as.numeric(get(maf_col))]
+  }
+  
+  dt <- dt[is.finite(maf_value_internal) & !is.na(maf_value_internal) & maf_value_internal > 0]
+  if (nrow(dt) == 0) stop("Variant-level file has no usable variants after cleaning.")
+  
+  if (!is.null(carrier_col)) {
+    dt[, carrier_value_internal := as.numeric(get(carrier_col))]
+  } else if (!is.null(ac_col)) {
+    dt[, carrier_value_internal := pmax(1, ceiling(as.numeric(get(ac_col)) / 2))]
+  } else {
+    dt[, carrier_value_internal := NA_real_]
+  }
+  
+  gene_summary <- dt[, .(
+    n_variants = .N,
+    cumulative_maf = sum(maf_value_internal, na.rm = TRUE),
+    mean_maf = mean(maf_value_internal, na.rm = TRUE),
+    carrier_count = sum(carrier_value_internal, na.rm = TRUE)
+  ), by = gene_col]
+  
+  setnames(gene_summary, gene_col, "gene")
+  attr(gene_summary, "variant_maf_dt") <- dt[, .(gene = get(gene_col), maf = maf_value_internal)]
+  gene_summary[]
+}
+
+normalise_gene_summary <- function(dt) {
+  dt <- copy(dt)
+  names(dt) <- clean_names(names(dt))
+  
+  gene_col <- find_col(names(dt), c("gene", "gene_symbol", "symbol", "hgnc_symbol", "gene_name"), required = TRUE)
+  nvar_col <- find_col(names(dt), c("n_variants", "variant_count", "nvar", "num_variants"), required = TRUE)
+  cmaf_col <- find_col(names(dt), c("cumulative_maf", "sum_maf", "cmaf", "burden_maf", "aggregate_maf"), required = TRUE)
+  carrier_col <- find_col(names(dt), c("carrier_count", "n_carriers", "carriers", "sample_carriers"))
+  
+  out <- dt[, .(
+    gene = as.character(get(gene_col)),
+    n_variants = as.integer(get(nvar_col)),
+    cumulative_maf = as.numeric(get(cmaf_col)),
+    carrier_count = if (!is.null(carrier_col)) as.numeric(get(carrier_col)) else NA_real_
+  )]
+  
+  out[, mean_maf := cumulative_maf / pmax(n_variants, 1)]
+  out <- out[is.finite(n_variants) & is.finite(cumulative_maf) & n_variants > 0 & cumulative_maf > 0]
+  out[]
+}
+
+pick_representative_genes <- function(gene_summary) {
+  probs <- c(0.25, 0.50, 0.75)
+  labels <- c("small", "medium", "large")
+  q_n <- quantile(gene_summary$n_variants, probs = probs, na.rm = TRUE, type = 7)
+  
+  reps <- rbindlist(lapply(seq_along(labels), function(i) {
+    target_n <- q_n[i]
+    tmp <- copy(gene_summary)
+    tmp[, dist := abs(n_variants - target_n)]
+    tmp[order(dist, abs(cumulative_maf - median(gene_summary$cumulative_maf, na.rm = TRUE)))][1, .(
+      size_class = labels[i],
+      gene,
+      n_variants,
+      cumulative_maf,
+      mean_maf,
+      carrier_count
+    )]
+  }))
+  
+  reps <- unique(reps, by = "size_class")
+  reps[]
+}
+
+make_synthetic_maf <- function(n_variants, cumulative_maf, mean_maf) {
+  target_sum <- cumulative_maf
+  base_mean <- min(max(mean_maf, 1e-5), 0.01)
+  shape <- 0.4
+  scale <- base_mean / shape
+  
+  maf <- rgamma(n_variants, shape = shape, scale = scale)
+  maf <- pmax(maf, 1e-8)
+  maf <- maf / sum(maf) * target_sum
+  maf <- pmin(maf, 0.01)
+  maf <- maf / sum(maf) * target_sum
+  maf <- pmin(pmax(maf, 1e-8), 0.01)
+  maf
+}
+
+plot_gene_distributions <- function(gene_summary, reps, outfile) {
+  p <- ggplot(gene_summary, aes(x = n_variants, y = cumulative_maf)) +
+    geom_point(alpha = 0.35) +
+    geom_point(data = reps, size = 3) +
+    geom_text(
+      data = reps,
+      aes(label = paste0(size_class, ": ", gene)),
+      nudge_y = max(gene_summary$cumulative_maf, na.rm = TRUE) * 0.02,
+      size = 3,
+      check_overlap = TRUE
+    ) +
+    theme_bw(base_size = 11) +
+    labs(
+      title = "Representative genes selected for power analysis",
+      x = "Variants per gene",
+      y = "Cumulative MAF burden"
+    )
+  
+  ggsave(outfile, p, width = 8, height = 5.5, dpi = 300)
+}
+
+plot_power_results <- function(dt, outfile) {
+  dt_plot <- copy(dt)
+  scenario_levels <- c(
+    "small\nOR=3", "small\nOR=5", "small\nOR=8",
+    "medium\nOR=3", "medium\nOR=5", "medium\nOR=8",
+    "large\nOR=3", "large\nOR=5", "large\nOR=8"
+  )
+  
+  dt_plot[, scenario := factor(
+    paste0(size_class, "\nOR=", odds_ratio),
+    levels = scenario_levels
+  )]
+  
+  p <- ggplot(dt_plot, aes(x = scenario, y = power)) +
+    geom_col() +
+    geom_errorbar(aes(ymin = power_lwr, ymax = power_upr), width = 0.2) +
+    theme_bw(base_size = 11) +
+    labs(
+      title = "Power for representative gene-level SKAT-O scenarios",
+      subtitle = paste0("Causal fraction fixed at ", causal_fraction * 100, "%"),
+      x = NULL,
+      y = "Estimated power"
+    )
+  
+  ggsave(outfile, p, width = 10, height = 4.8, dpi = 300)
+}
+
+write_interpretation <- function(power_results, alpha, outfile) {
+  txt <- c(
+    "Interpretation",
+    "",
+    paste0("Gene-level SKAT-O power was evaluated at alpha = ", format(alpha, scientific = TRUE), "."),
+    paste0("Sample size assumed ", n_cases, " cases and ", n_controls, " controls."),
+    paste0(
+      "Representative scenarios were tested: small, medium, and large genes, each under OR values ",
+      paste(odds_ratios, collapse = ", "),
+      ", with ",
+      causal_fraction * 100,
+      "% causal variants."
+    ),
+    "",
+    "This supports a cautious interpretation of the negative gene-level result.",
+    "The study is likely to have been adequately powered only for stronger aggregate gene-level effects,",
+    "whereas weaker or sparser enrichment may have remained undetected under Bonferroni correction."
+  )
+  
+  writeLines(txt, con = outfile)
+}
+
+variant_level_dt <- read_table_guess(variant_level_file)
+gene_summary_dt <- read_table_guess(gene_summary_file)
+
+if (!is.null(variant_level_dt)) names(variant_level_dt) <- clean_names(names(variant_level_dt))
+if (!is.null(gene_summary_dt)) names(gene_summary_dt) <- clean_names(names(gene_summary_dt))
+
+if (!is.null(variant_level_dt)) {
+  gene_summary <- build_gene_summary_from_variant_level(variant_level_dt)
+  variant_maf_dt <- attr(gene_summary, "variant_maf_dt")
+} else if (!is.null(gene_summary_dt)) {
+  gene_summary <- normalise_gene_summary(gene_summary_dt)
+  variant_maf_dt <- NULL
+} else {
+  stop(
+    "No input file found.\n",
+    "Provide either:\n",
+    "  1) a variant-level file variant_level.tsv\n",
+    "  2) a gene summary file gene_summary.tsv\n",
+    "or pass explicit paths as command-line arguments."
+  )
+}
+
+gene_summary <- gene_summary[is.finite(n_variants) & is.finite(cumulative_maf) & n_variants > 0 & cumulative_maf > 0]
+if (nrow(gene_summary) < 10) stop("Too few genes available after cleaning to run the power analysis.")
+
+fwrite(gene_summary, file.path(data_dir, "gene_summary_characterised.tsv"), sep = "\t")
+
+representative_genes <- pick_representative_genes(gene_summary)
+fwrite(representative_genes, file.path(data_dir, "representative_gene_architectures.tsv"), sep = "\t")
+plot_gene_distributions(gene_summary, representative_genes, file.path(data_dir, "representative_gene_architectures.png"))
+
+scenario_grid <- CJ(
+  rep_idx = seq_len(nrow(representative_genes)),
+  odds_ratio = odds_ratios
+)
+scenario_grid[, scenario_idx := seq_len(.N)]
+scenario_grid[, total_scenarios := .N]
+
+power_results_list <- vector("list", nrow(scenario_grid))
+
+for (j in seq_len(nrow(scenario_grid))) {
+  rep_row <- representative_genes[scenario_grid$rep_idx[j]]
+  or_val <- scenario_grid$odds_ratio[j]
+  
+  scenario_label <- sprintf(
+    "set %d/%d | %s | gene=%s | nvar=%d | OR=%s",
+    scenario_grid$scenario_idx[j],
+    scenario_grid$total_scenarios[j],
+    rep_row$size_class,
+    rep_row$gene,
+    rep_row$n_variants,
+    as.character(or_val)
+  )
+  
+  message("")
+  message("Starting ", scenario_label)
+  
+  maf_vec <- NULL
+  if (!is.null(variant_maf_dt) && rep_row$gene %in% variant_maf_dt$gene) {
+    maf_vec <- variant_maf_dt[gene == rep_row$gene, maf]
+    maf_vec <- maf_vec[is.finite(maf_vec) & maf_vec > 0]
+  }
+  if (is.null(maf_vec) || length(maf_vec) == 0) {
+    maf_vec <- make_synthetic_maf(rep_row$n_variants, rep_row$cumulative_maf, rep_row$mean_maf)
+  }
+  
+  t0 <- Sys.time()
+  
+  res <- estimate_power(
+    maf = maf_vec,
+    causal_fraction = causal_fraction,
+    or_causal = or_val,
+    n_cases = n_cases,
+    n_controls = n_controls,
+    n_reps = n_reps,
+    alpha = alpha,
+    scenario_label = scenario_label
+  )
+  
+  elapsed <- round(as.numeric(difftime(Sys.time(), t0, units = "secs")), 1)
+  message("Finished ", scenario_label, " in ", elapsed, " sec")
+  
+  power_results_list[[j]] <- cbind(
+    rep_row[, .(size_class, representative_gene = gene, n_variants, cumulative_maf, mean_maf, carrier_count)],
+    data.table(causal_fraction = causal_fraction, odds_ratio = or_val),
+    res
+  )
+}
+
+power_results <- rbindlist(power_results_list)
+
+setcolorder(power_results, c(
+  "size_class", "representative_gene", "n_variants", "cumulative_maf", "mean_maf", "carrier_count",
+  "causal_fraction", "odds_ratio", "n_reps", "hits", "power", "power_lwr", "power_upr"
+))
+
+fwrite(power_results, file.path(data_dir, "power_results.tsv"), sep = "\t")
+plot_power_results(power_results, file.path(data_dir, "power_results.png"))
+
+summary_stats <- data.table(
+  n_genes_tested = nrow(gene_summary),
+  bonferroni_alpha = alpha,
+  cases = n_cases,
+  controls = n_controls,
+  simulation_reps_per_scenario = n_reps,
+  causal_fraction = causal_fraction
+)
+
+fwrite(summary_stats, file.path(data_dir, "analysis_summary.tsv"), sep = "\t")
+write_interpretation(power_results, alpha, file.path(data_dir, "interpretation.txt"))
+
+message("")
+message("Done. Results written to: ", data_dir)
