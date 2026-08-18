@@ -23,6 +23,24 @@ The code in this project is quiet chaotic due to the incremental development.
 We are building a new project with a clean and documented style. 
 See <https://swisspedhealth-pipelinedev.github.io/docs/> if you are interested in reading up some of the main content now documented more formally. 
 
+## Processing
+
+The data was processed with the workflow documented in:
+ 
+- steps 0-12 controls and datasets 1-2. (Plus individual tests)
+https://github.com/DylanLawless/spss_exome_vsat/tree/main/src/preprocessing
+ 
+- steps 12-24 joint cohort.The same source data were written in two formats: a larger and a smaller VCF, differing only in the number of annotation columns added by VEP, as defined in steps 17.1 and 17.2.
+https://github.com/DylanLawless/spss_exome_vsat/tree/main/src/preprocessing/joint
+ 
+- steps 25 for PPI analysis.
+https://github.com/DylanLawless/spss_exome_vsat/tree/main/src/preprocessing/ppi
+ 
+- The data for ProteoMCLustR. This was taken from the public source
+https://github.com/DylanLawless/ProteoMCLustR
+ 
+- steps for plots and tables. The non-sensitive data produced above was then added to the public Zenodo repository. This data is plotted in figures and tables, produced from the remaining code directories, such as ACMGuru_singlecase:  https://github.com/DylanLawless/spss_exome_vsat/tree/main/src/ACMGuru_singlecase_vcurrent
+
 ## Publication files
 
 From `sync_publication.sh`
