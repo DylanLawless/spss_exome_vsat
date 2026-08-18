@@ -82,8 +82,8 @@ rm(X2)
 # prep qualifying candidate variants
 file_list <- c(
 	paste0("../../data/joint/annotation/bcftools_gatk_norm_maf01.recode_vep_conda_small_impact_gnomad_chr_", 1:22, ".vcf.gz",
-		   "../data/annotation/bcftools_gatk_norm_maf01.recode_vep_conda_small_impact_gnomad_chr_X.vcf.gz",
-		   "../data/annotation/bcftools_gatk_norm_maf01.recode_vep_conda_small_impact_gnomad_chr_Y.vcf.gz"
+		   "../data/joint/annotation/bcftools_gatk_norm_maf01.recode_vep_conda_small_impact_gnomad_chr_X.vcf.gz",
+		   "../data/joint/annotation/bcftools_gatk_norm_maf01.recode_vep_conda_small_impact_gnomad_chr_Y.vcf.gz"
 )
 
 # initialize an empty dataframe to store the results
