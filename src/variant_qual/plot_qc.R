@@ -197,7 +197,7 @@ p1 <- ggplot() +
   guides(colour = guide_legend(nrow = 2, byrow = TRUE))
 
 ggsave(file.path(image_out, "kir_chr19_quality.png"), p1,
-       width = 12, height = 9, dpi = 300)
+       width = 12, height = 9, dpi = 90)
 
 kir_chr19_positions <- chr19_plot_sites[IS_KIR == 1L, POS]
 if (length(kir_chr19_positions)) {
@@ -208,7 +208,7 @@ if (length(kir_chr19_positions)) {
     xlim = c(max(0, zoom_min - zoom_padding), zoom_max + zoom_padding) / 1e6
   ) + labs(title = "Chromosome 19: quality near KIR genes")
   ggsave(file.path(image_out, "kir_chr19_quality_zoom.png"), p1_zoom,
-         width = 12, height = 9, dpi = 300)
+         width = 12, height = 9, dpi = 90)
 }
 
 # Figure 2. Within-post_ppi site-quality comparison.
@@ -237,7 +237,7 @@ p2 <- ggplot(site_long, aes(value, colour = region)) +
   theme_bw(base_size = 11)
 
 ggsave(file.path(image_out, "kir_site_quality_ecdf.png"), p2,
-       width = 11, height = 8, dpi = 300)
+       width = 11, height = 8, dpi = 90)
 
 # Figure 3. Within-post_ppi heterozygous carrier-quality comparison.
 het <- mcl_carriers[GT %in% c("0/1", "1/0", "0|1", "1|0")]
@@ -267,7 +267,7 @@ if (nrow(carrier_long)) {
     theme_bw(base_size = 11)
   
   ggsave(file.path(image_out, "kir_carrier_quality_ecdf.png"), p3,
-         width = 11, height = 7, dpi = 300)
+         width = 11, height = 7, dpi = 90)
 } else {
   message("No finite heterozygous carrier metrics to plot.")
 }
@@ -391,7 +391,7 @@ p4 <- plot_ranked_metrics(
 )
 
 ggsave(file.path(image_out, "kir_all_site_quality_ranked.png"), p4,
-       width = 14, height = 8.5, dpi = 300)
+       width = 14, height = 8.5, dpi = 90)
 
 fwrite(
   qc_long[IS_KIR == 1L, .(
@@ -422,7 +422,7 @@ p5 <- ggplot() +
   theme(panel.grid.minor = element_blank())
 
 ggsave(file.path(image_out, "kir_quality_space.png"), p5,
-       width = 11, height = 8, dpi = 300)
+       width = 11, height = 8, dpi = 90)
 
 # Figure 6. Median heterozygote-call quality per variant, not per sample.
 het_sites <- het[, .(
@@ -460,7 +460,7 @@ if (nrow(het_long)) {
     subtitle = "Per-variant medians. Lower allele-balance deviation is closer to the expected 0.5."
   )
   ggsave(file.path(image_out, "kir_carrier_quality_ranked.png"), p6,
-         width = 14, height = 5.5, dpi = 300)
+         width = 14, height = 5.5, dpi = 90)
   
   # Figure 8. Histograms of per-variant carrier quality with KIR rug marks.
   p8 <- plot_histogram_with_kir_marks(
@@ -469,7 +469,7 @@ if (nrow(het_long)) {
     subtitle = "Grey histograms show non-KIR variants. Coloured rug marks show individual KIR variants."
   )
   ggsave(file.path(image_out, "kir_carrier_quality_histograms.png"), p8,
-         width = 14, height = 5.8, dpi = 300)
+         width = 14, height = 5.8, dpi = 90)
 }
 
 # Figure 7. Histograms of site-level quality with KIR rug marks.
@@ -480,7 +480,7 @@ p7 <- plot_histogram_with_kir_marks(
 )
 
 ggsave(file.path(image_out, "kir_site_quality_histograms.png"), p7,
-       width = 14, height = 8.5, dpi = 300)
+       width = 14, height = 8.5, dpi = 90)
 
 # Figure 9 and statistical report. One distinct SNV is the analysis unit for
 # site metrics; one per-variant median heterozygote call is the unit for carrier
@@ -668,7 +668,7 @@ p9 <- ggplot(
   theme_bw(base_size = 11) +
   theme(panel.grid.minor = element_blank(), legend.position = "bottom")
 ggsave(file.path(image_out, "kir_qc_tail_comparison.png"), p9,
-       width = 12, height = 8, dpi = 300)
+       width = 12, height = 8, dpi = 90)
 
 # Compact gene-level summaries for identifying a few problematic KIR genes.
 kir_gene_summary <- qc_sites[IS_KIR == 1L, .(
@@ -868,7 +868,7 @@ p10 <- ggplot(key_tail_plot, aes(x = Region, y = proportion, colour = Region)) +
   theme(panel.grid.minor = element_blank())
 
 ggsave(file.path(image_out, "kir_qc_key_tail_intervals.png"), p10,
-       width = 10.5, height = 5.5, dpi = 300)
+       width = 10.5, height = 5.5, dpi = 90)
 
 # Data-derived, concise report. All test results are recalculated on each run.
 report_metric <- function(code_value, type_value = "Site") {
@@ -1217,7 +1217,7 @@ html <- paste0(
   '</section></body></html>'
 )
 
-writeLines(html, file.path(image_out, "kir_qc_report.html"), useBytes = TRUE)
+writeLines(html, file.path(image_out, "report.html"), useBytes = TRUE)
 cat("\nExploratory MQ and VQSLOD low-tail comparisons:\n")
 print(key_tail_tests[, .(
   code, low_KIR, n_KIR, low_other, n_other,
@@ -1228,4 +1228,4 @@ print(qc_statistics[, .(
   type, code, n_KIR, n_other, median_KIR, median_other,
   median_difference, ci_low, ci_high, cliffs_delta, p_value, p_FDR
 )])
-cat("\nWrote report: ", file.path(image_out, "kir_qc_report.html"), "\n", sep = "")
+cat("\nWrote report: ", file.path(image_out, "report.html"), "\n", sep = "")
